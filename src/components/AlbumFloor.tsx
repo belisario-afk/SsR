@@ -8,7 +8,7 @@ import {
   PlaneGeometry,
   SRGBColorSpace,
   Texture,
-  TextureLoader,
+  TextureLoader
 } from 'three';
 import { useThree } from '@react-three/fiber';
 

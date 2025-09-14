@@ -2,28 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Global styling, optimized for tablet hit targets */
-:root {
-  --panel-blur: 10px;
-}
-
-html, body, #root {
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  background: #000000;
-  color-scheme: dark;
-}
-
-button, [role="button"] {
-  -webkit-tap-highlight-color: transparent;
-}
-
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-::-webkit-scrollbar-thumb {
-  background: #222;
-  border-radius: 6px;
-}
+/* Base fixes */
+:root, html, body, #root { height: 100%; }
+html { color-scheme: dark; }
+body { @apply m-0 bg-black text-neutral-200 antialiased; }
+canvas { display: block; }

@@ -1,15 +1,8 @@
 import React, { useLayoutEffect, useMemo, useRef } from 'react';
 import { useGLTF, Center } from '@react-three/drei';
-import {
-  Box3,
-  Color,
-  Group,
-  Mesh,
-  MeshPhysicalMaterial,
-  MeshStandardMaterial,
-  Vector3,
-} from 'three';
+import { Box3, Color, Group, Mesh, MeshPhysicalMaterial, MeshStandardMaterial, Vector3 } from 'three';
 import { useFrame } from '@react-three/fiber';
+import { ENV } from '@config/env';
 
 type CarModelProps = {
   url?: string;
@@ -20,9 +13,7 @@ type CarModelProps = {
   lowPower?: boolean;
 };
 
-const DEFAULT_EXTERNAL_URL =
-  import.meta.env.VITE_MODEL_URL ??
-  'https://github.com/belisario-afk/SsR/releases/download/model-assets/hitem3d.glb';
+const DEFAULT_EXTERNAL_URL = ENV.MODEL_URL;
 
 export function CarModel({
   url = DEFAULT_EXTERNAL_URL,

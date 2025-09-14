@@ -1,29 +1,24 @@
-import { defineConfig, loadEnv } from 'vite';
+import { defineConfig, loadEnv, type ConfigEnv } from 'vite';
 import react from '@vitejs/plugin-react';
-import path from 'node:path';
+import tsconfigPaths from 'vite-tsconfig-paths';
 
-export default ({ mode }) => {
+export default defineConfig(({ mode }: ConfigEnv) => {
   const env = loadEnv(mode, process.cwd(), '');
-  const deployTarget = env.VITE_DEPLOY_TARGET || '';
+  const deployTarget = env.VITE_DEPLOY_TARGET || 'ghpages';
   const repoBase = env.VITE_REPO_BASE || 'SsR';
 
-  // Vercel/most hosts -> '/'; GitHub Pages -> '/<repo>/'
+  // GitHub Pages needs "/<repo>/"; other hosts typically use "/"
   const base = deployTarget === 'ghpages' ? `/${repoBase}/` : '/';
 
-  return defineConfig({
-    plugins: [react()],
+  return {
     base,
-    resolve: {
-      alias: {
-        '@styles': path.resolve(process.cwd(), 'src/styles'),
-        '@components': path.resolve(process.cwd(), 'src/components'),
-        '@config': path.resolve(process.cwd(), 'src/config'),
-        '@providers': path.resolve(process.cwd(), 'src/providers'),
-        '@utils': path.resolve(process.cwd(), 'src/utils')
-      }
-    },
+    plugins: [
+      tsconfigPaths(),
+      react()
+    ],
     server: {
       port: 5173,
+      host: true,
       strictPort: false
     },
     build: {
@@ -34,7 +29,7 @@ export default ({ mode }) => {
     },
     preview: {
       port: 4173,
-      strictPort: false
+      host: true
     }
-  });
-};
+  };
+});

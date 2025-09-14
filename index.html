@@ -3,16 +3,16 @@
   <head>
     <meta charset="UTF-8" />
 
-    <!-- CSP tightened for Spotify + GitHub Releases, no map tiles -->
+    <!-- CSP allows Spotify and Vercel Blob (for GLB). Add more domains if needed. -->
     <meta
       http-equiv="Content-Security-Policy"
       content="default-src 'self' https://api.spotify.com https://accounts.spotify.com https://sdk.scdn.co https://*.scdn.co;
-               img-src 'self' data: blob: https://*.scdn.co https://objects.githubusercontent.com https://github.com;
+               img-src 'self' data: blob: https://i.scdn.co https://*.scdn.co https://*.vercel-storage.com;
                media-src 'self' blob: data:;
                script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://sdk.scdn.co blob:;
                worker-src 'self' blob:;
                style-src 'self' 'unsafe-inline';
-               connect-src 'self' blob: https://api.spotify.com https://accounts.spotify.com https://sdk.scdn.co https://*.scdn.co https://api.open-meteo.com https://github.com https://objects.githubusercontent.com ws:;
+               connect-src 'self' blob: https://api.spotify.com https://accounts.spotify.com https://sdk.scdn.co https://*.scdn.co https://*.vercel-storage.com ws:;
                font-src 'self' data:;
                upgrade-insecure-requests"
     />
@@ -22,17 +22,14 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="description" content="SsR — 3D dashboard with Spotify integration." />
+    <meta name="description" content="SsR Opel Z — 3D animated stereo/dashboard with Spotify integration." />
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
-    <link rel="shortcut icon" type="image/svg+xml" href="favicon.svg" />
-    <!-- Make manifest relative to base to avoid 401 on subpaths -->
     <link rel="manifest" href="manifest.webmanifest" />
-    <title>SsR</title>
+    <title>SsR Opel Z</title>
   </head>
   <body class="bg-black">
-    <noscript>Enable JavaScript to run SsR.</noscript>
+    <noscript>Enable JavaScript to run SsR Opel Z.</noscript>
     <div id="root"></div>
-    <!-- Vite will rewrite this with the correct base during build -->
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
