@@ -4,6 +4,17 @@ import { Box3, Color, Group, Mesh, MeshPhysicalMaterial, MeshStandardMaterial, V
 import { useFrame } from '@react-three/fiber';
 import { ENV } from '@config/env';
 
+// Join BASE_URL with a relative path (works on GitHub Pages "/SsR/")
+function baseJoin(rel: string) {
+  const base = (import.meta.env.BASE_URL as string) || '/';
+  const baseTrimmed = base.endsWith('/') ? base : base + '/';
+  const relTrimmed = rel.startsWith('/') ? rel.slice(1) : rel;
+  return baseTrimmed + relTrimmed;
+}
+
+// Tell GLTFLoader where to load Draco decoders from (same-origin)
+useGLTF.setDecoderPath(baseJoin('draco/'));
+
 type CarModelProps = {
   url?: string;
   targetSize?: number;
@@ -95,4 +106,5 @@ export function CarModel({
   );
 }
 
+// Preload model (uses the decoder path set above)
 useGLTF.preload(DEFAULT_EXTERNAL_URL);

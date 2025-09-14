@@ -3,7 +3,6 @@
   <head>
     <meta charset="UTF-8" />
 
-    <!-- CSP updated: allows Spotify SDK/CDNs and Open-Meteo. Model is same-origin. -->
     <meta
       http-equiv="Content-Security-Policy"
       content="default-src 'self' https://api.spotify.com https://accounts.spotify.com https://sdk.scdn.co https://*.scdn.co;
@@ -12,9 +11,12 @@
                script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://sdk.scdn.co blob:;
                worker-src 'self' blob:;
                style-src 'self' 'unsafe-inline';
-               connect-src 'self' blob: ws: https://api.spotify.com https://accounts.spotify.com https://sdk.scdn.co https://*.scdn.co https://*.spotifycdn.com https://api.open-meteo.com;
+               connect-src 'self' blob: ws: wss: https://api.spotify.com https://accounts.spotify.com https://sdk.scdn.co https://*.scdn.co https://*.spotifycdn.com https://api.open-meteo.com;
                font-src 'self' data;"
     />
+    <!-- If you prefer using Google's Draco CDN instead of local files, add:
+         connect-src ... https://www.gstatic.com; and script-src ... https://www.gstatic.com;
+         Then remove the local setDecoderPath or point it to gstatic. -->
 
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
     <meta name="theme-color" content="#000000" />
