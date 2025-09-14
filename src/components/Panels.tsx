@@ -1,3 +1,4 @@
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '@providers/ThemeProvider';
 
@@ -6,9 +7,15 @@ type PanelsProps = {
 };
 
 const panelVariants = {
-  initial: { opacity: 0, y: 60, scale: 0.98, filter: 'blur(8px)' },
-  animate: { opacity: 1, y: 0, scale: 1, filter: 'blur(0px)', transition: { type: 'spring', stiffness: 180, damping: 18 } },
-  exit: { opacity: 0, y: 60, scale: 0.98, filter: 'blur(8px)', transition: { duration: 0.25 } }
+  initial: { opacity: 0, y: 60, scale: 0.98, '--blur': '8px' } as any,
+  animate: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    '--blur': '0px',
+    transition: { type: 'spring', stiffness: 180, damping: 20, bounce: 0 }
+  } as any,
+  exit: { opacity: 0, y: 60, scale: 0.98, '--blur': '8px', transition: { duration: 0.25 } } as any
 };
 
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
@@ -16,12 +23,19 @@ function Panel({ title, children }: { title: string; children: React.ReactNode }
   return (
     <motion.div
       className="pointer-events-auto w-[92vw] tablet:w-[70vw] mx-auto rounded-3xl"
-      style={{
-        background: 'rgba(10,10,10,0.6)',
-        border: `1px solid ${theme.colors.primaryHex}33`,
-        boxShadow: `0 0 40px ${theme.colors.accentHex}33`,
-        backdropFilter: 'blur(var(--panel-blur))'
-      }}
+      style={
+        {
+          background: 'rgba(10,10,10,0.6)',
+          border: `1px solid ${theme.colors.primaryHex}33`,
+          boxShadow: `0 0 40px ${theme.colors.accentHex}33`,
+          backdropFilter: 'blur(var(--panel-blur))',
+          // Animate blur via CSS var with clamp to avoid negative values from spring overshoot
+          filter: 'blur(clamp(0px, var(--blur, 0px), 12px))',
+          // defaults
+          ['--blur' as any]: '0px',
+          ['--panel-blur' as any]: '10px'
+        } as any
+      }
       variants={panelVariants}
       initial="initial"
       animate="animate"
