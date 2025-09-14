@@ -2,11 +2,15 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <!-- CSP updated: allow 'wasm-unsafe-eval' for Meshopt WASM, and blob: in connect-src for GLB textures -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self' https://api.spotify.com https://accounts.spotify.com https://sdk.scdn.co https://*.scdn.co; img-src 'self' data: blob: https://*.scdn.co; media-src 'self' blob: data:; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://sdk.scdn.co blob:; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; connect-src 'self' https://api.spotify.com https://accounts.spotify.com https://sdk.scdn.co https://*.scdn.co https://api.open-meteo.com ws:; font-src 'self' data:; upgrade-insecure-requests"
+      content="default-src 'self' https://api.spotify.com https://accounts.spotify.com https://sdk.scdn.co https://*.scdn.co; img-src 'self' data: blob: https://*.scdn.co; media-src 'self' blob: data:; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://sdk.scdn.co blob:; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; connect-src 'self' blob: https://api.spotify.com https://accounts.spotify.com https://sdk.scdn.co https://*.scdn.co https://api.open-meteo.com ws:; font-src 'self' data:; upgrade-insecure-requests"
     />
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+    />
     <meta name="theme-color" content="#000000" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
@@ -20,6 +24,7 @@
   <body class="bg-black">
     <noscript>Enable JavaScript to run SsR Opel Z.</noscript>
     <div id="root"></div>
+    <!-- Vite will transform this in dev; in production it will inject built assets -->
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
