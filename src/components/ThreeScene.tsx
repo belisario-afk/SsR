@@ -34,6 +34,10 @@ export function ThreeScene() {
         depth: true,
         failIfMajorPerformanceCaveat: true
       }}
+      onCreated={(state) => {
+        // Prevent browser default behavior on context lost so R3F can restore.
+        state.gl.domElement.addEventListener('webglcontextlost', (e) => e.preventDefault(), false);
+      }}
       performance={{ min: 0.3 }}
       shadows={false}
     >

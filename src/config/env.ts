@@ -1,8 +1,13 @@
 function resolveModelUrl(): string {
-  // If VITE_MODEL_URL is absolute (http/https), use it. Otherwise, resolve relative to Vite's BASE_URL.
   const raw = (import.meta.env.VITE_MODEL_URL as string) || 'models/hitem3d.glb';
-  const isAbsolute = /^https?:\/\//i.test(raw);
-  return isAbsolute ? raw : new URL(raw, import.meta.env.BASE_URL).toString();
+  // If absolute (http/https), return as-is.
+  if (/^https?:\/\//i.test(raw)) return raw;
+
+  // Join BASE_URL (e.g., "/SsR/") with relative path (e.g., "models/hitem3d.glb") without using new URL.
+  const base = (import.meta.env.BASE_URL as string) || '/';
+  const baseTrimmed = base.endsWith('/') ? base : base + '/';
+  const rel = raw.startsWith('/') ? raw.slice(1) : raw;
+  return baseTrimmed + rel;
 }
 
 export const ENV = {

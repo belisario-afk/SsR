@@ -1,4 +1,4 @@
-# Dependencies
+# Dependencies / builds
 node_modules
 dist
 .build
@@ -10,17 +10,14 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# Editor
+# Editors / OS
 .vscode
 .idea
+.DS_Store
+Thumbs.db
 
-# Env
+# Local env
+.env.local
+.env.*.local
 
-
-# Mac
-.DS_Store"public/models/*.glb" 
-"public/models/*.glb" 
-"public/models/*.glb" 
-"public/models/*.glb" 
-public/models/*.glb
-public/models/*.glb
+# Do NOT ignore models. Commit public/models/hitem3d.glb (<100 MB).
