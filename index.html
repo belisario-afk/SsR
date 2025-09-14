@@ -2,10 +2,10 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <!-- Add your proxy domain to connect-src if it’s on another origin (e.g., Vercel) -->
+    <!-- Updated CSP: replace placeholder with your real domain and allow the needed services -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self' https://api.spotify.com https://accounts.spotify.com https://sdk.scdn.co https://*.scdn.co; img-src 'self' data: blob: https://*.scdn.co https://tile.openstreetmap.org https://api.maptiler.com https://*.maptiler.com; media-src 'self' blob: data:; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://sdk.scdn.co blob:; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; connect-src 'self' blob: https://api.spotify.com https://accounts.spotify.com https://sdk.scdn.co https://*.scdn.co https://api.open-meteo.com https://tile.openstreetmap.org https://api.maptiler.com https://*.maptiler.com https://api.elevenlabs.io https://YOUR_VERCEL_APP_DOMAIN.vercel.app ws:; font-src 'self' data:; upgrade-insecure-requests"
+      content="default-src 'self'; img-src 'self' data: blob: https://tile.openstreetmap.org https://api.maptiler.com https://*.maptiler.com; media-src 'self' blob: data: https://audio-ak.spotifycdn.com; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://sdk.scdn.co blob:; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; connect-src 'self' blob: ws: wss: https://accounts.spotify.com https://api.spotify.com https://sdk.scdn.co https://*.scdn.co https://api.open-meteo.com https://tile.openstreetmap.org https://api.maptiler.com https://*.maptiler.com https://ss-r.vercel.app https://api.elevenlabs.io; font-src 'self' data:; upgrade-insecure-requests"
     />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
     <meta name="theme-color" content="#000000" />
