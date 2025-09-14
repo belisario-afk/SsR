@@ -4,14 +4,14 @@ import { Group, Box3, Vector3 } from 'three';
 import { useFrame } from '@react-three/fiber';
 
 type CarModelProps = {
-  url?: string;           // Path to your GLB (defaults to BASE_URL + models/hitem3d.glb)
+  url?: string;           // Path to your GLB (relative to app root)
   targetSize?: number;    // Fit longest dimension to this world-unit size
   spin?: boolean;         // Gently rotate the model
   yOffset?: number;       // Nudge up/down if needed
 };
 
-// Build a URL that respects the site base (GitHub Pages subpaths, etc.)
-const defaultUrl = new URL('models/hitem3d.glb', import.meta.env.BASE_URL).toString();
+// Use a relative path so it works at / and at /repo/ on GitHub Pages
+const defaultUrl = 'models/hitem3d.glb';
 
 export function CarModel({ url = defaultUrl, targetSize = 3.8, spin = true, yOffset = 0 }: CarModelProps) {
   // Load GLB (same-origin fetch, works with your CSP)
@@ -52,5 +52,5 @@ export function CarModel({ url = defaultUrl, targetSize = 3.8, spin = true, yOff
   );
 }
 
-// Preload default path (optional, also uses BASE_URL-safe URL)
+// Preload default path
 useGLTF.preload(defaultUrl);
