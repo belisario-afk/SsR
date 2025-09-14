@@ -4,26 +4,29 @@ import { Group, Box3, Vector3 } from 'three';
 import { useFrame } from '@react-three/fiber';
 
 type CarModelProps = {
-  url?: string;           // Path to your GLB (relative to app root)
+  url?: string;           // GLB URL
   targetSize?: number;    // Fit longest dimension to this world-unit size
   spin?: boolean;         // Gently rotate the model
   yOffset?: number;       // Nudge up/down if needed
 };
 
-// Use a relative path so it works at / and at /repo/ on GitHub Pages
-const defaultUrl = 'models/hitem3d.glb';
+// Compute a base-aware default URL that works on both user pages (/) and project pages (/repo/).
+function getDefaultModelUrl() {
+  // Try Vite/Cra envs
+  const viteBase = (typeof import.meta !== 'undefined' && (import.meta as any)?.env?.BASE_URL) || '';
+  const craBase = (typeof process !== 'undefined' && (process as any)?.env?.PUBLIC_URL) || '';
+  const base = (viteBase || craBase || '/').replace(/\/+$/, '');
+  return `${base}/models/hitem3d.glb`;
+}
+
+const defaultUrl = getDefaultModelUrl();
 
 export function CarModel({ url = defaultUrl, targetSize = 3.8, spin = true, yOffset = 0 }: CarModelProps) {
-  // Load GLB (same-origin fetch, works with your CSP)
   const gltf = useGLTF(url) as any;
 
-  // Clone the loaded scene so we can safely manipulate transforms
   const sceneClone = useMemo(() => gltf.scene.clone(true), [gltf.scene]);
-
-  // Group to control scale/rotation without mutating the original
   const modelGroup = useRef<Group>(null!);
 
-  // Auto-scale to targetSize (fit longest dimension) and let <Center> center it at origin
   useLayoutEffect(() => {
     if (!modelGroup.current) return;
     const box = new Box3().setFromObject(modelGroup.current);
@@ -34,7 +37,6 @@ export function CarModel({ url = defaultUrl, targetSize = 3.8, spin = true, yOff
     modelGroup.current.scale.setScalar(scale);
   }, [targetSize]);
 
-  // Gentle idle rotation
   useFrame((state) => {
     if (!spin || !modelGroup.current) return;
     const t = state.clock.getElapsedTime();
@@ -52,5 +54,5 @@ export function CarModel({ url = defaultUrl, targetSize = 3.8, spin = true, yOff
   );
 }
 
-// Preload default path
+// Preload (base-aware)
 useGLTF.preload(defaultUrl);
