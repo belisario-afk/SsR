@@ -6,8 +6,6 @@ export default defineConfig(({ mode }: ConfigEnv) => {
   const env = loadEnv(mode, process.cwd(), '');
   const deployTarget = env.VITE_DEPLOY_TARGET || 'ghpages';
   const repoBase = env.VITE_REPO_BASE || 'SsR';
-
-  // GitHub Pages needs "/<repo>/"; other hosts typically use "/"
   const base = deployTarget === 'ghpages' ? `/${repoBase}/` : '/';
 
   return {
