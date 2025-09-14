@@ -21,3 +21,4 @@ pnpm-debug.log*
 
 # Mac
 .DS_Store"public/models/*.glb" 
+"public/models/*.glb" 
