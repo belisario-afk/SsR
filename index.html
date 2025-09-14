@@ -12,14 +12,15 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="description" content="SsR Opel Z — 3D animated stereo/dashboard experience for Samsung Galaxy Tab SMT77U." />
-    <link rel="icon" type="image/svg+xml" href="/SsR/favicon.svg" />
-    <link rel="manifest" href="/SsR/manifest.webmanifest" />
+    <!-- Use relative paths so both Vite dev (/) and GitHub Pages (/SsR/) work -->
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="shortcut icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="manifest" href="manifest.webmanifest" />
     <title>SsR Opel Z</title>
   </head>
   <body class="bg-black">
     <noscript>Enable JavaScript to run SsR Opel Z.</noscript>
     <div id="root"></div>
-    <!-- Use project-relative path so dev server works; Vite will rewrite on build for Pages base -->
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
