@@ -85,7 +85,7 @@ export function ThreeScene() {
   const headingRad = useMemo(() => THREE.MathUtils.degToRad(fix.heading || 0), [fix.heading]);
 
   // Force a much wider map view
-  const WIDE_ZOOM = 9; // lower = wider (try 11 or 10 for even more)
+  const WIDE_ZOOM = 20; // lower = wider (try 11 or 10 for even more)
   // Option: if you want dynamic zoom, replace with a computed value.
 
   // FX density
