@@ -1,12 +1,11 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
-import { VoiceProvider } from '@providers/VoiceProvider';
+import '@styles/index.css';
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+const root = document.getElementById('root')!;
+ReactDOM.createRoot(root).render(
   <React.StrictMode>
-    <VoiceProvider>
-      <App />
-    </VoiceProvider>
+    <App />
   </React.StrictMode>
 );
