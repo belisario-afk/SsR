@@ -10,24 +10,9 @@ export default defineConfig(({ mode }: ConfigEnv) => {
 
   return {
     base,
-    plugins: [
-      tsconfigPaths(),
-      react()
-    ],
-    server: {
-      port: 5173,
-      host: true,
-      strictPort: false
-    },
-    build: {
-      target: 'esnext',
-      sourcemap: true,
-      outDir: 'dist',
-      assetsDir: 'assets'
-    },
-    preview: {
-      port: 4173,
-      host: true
-    }
+    plugins: [tsconfigPaths(), react()],
+    server: { port: 5173, host: true, strictPort: false },
+    build: { target: 'esnext', sourcemap: true, outDir: 'dist', assetsDir: 'assets' },
+    preview: { port: 4173, host: true }
   };
 });

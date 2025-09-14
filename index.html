@@ -3,18 +3,17 @@
   <head>
     <meta charset="UTF-8" />
 
-    <!-- CSP allows Spotify and Vercel Blob (for GLB). Add more domains if needed. -->
+    <!-- CSP: allow Spotify SDK, Spotify CDNs, and Open-Meteo. GLB is same-origin. -->
     <meta
       http-equiv="Content-Security-Policy"
       content="default-src 'self' https://api.spotify.com https://accounts.spotify.com https://sdk.scdn.co https://*.scdn.co;
-               img-src 'self' data: blob: https://i.scdn.co https://*.scdn.co https://*.vercel-storage.com;
-               media-src 'self' blob: data:;
+               img-src 'self' data: blob: https://i.scdn.co https://*.scdn.co;
+               media-src 'self' blob: data: https://*.spotifycdn.com;
                script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://sdk.scdn.co blob:;
                worker-src 'self' blob:;
                style-src 'self' 'unsafe-inline';
-               connect-src 'self' blob: https://api.spotify.com https://accounts.spotify.com https://sdk.scdn.co https://*.scdn.co https://*.vercel-storage.com ws:;
-               font-src 'self' data:;
-               upgrade-insecure-requests"
+               connect-src 'self' blob: ws: https://api.spotify.com https://accounts.spotify.com https://sdk.scdn.co https://*.scdn.co https://*.spotifycdn.com https://api.open-meteo.com;
+               font-src 'self' data;"
     />
 
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
