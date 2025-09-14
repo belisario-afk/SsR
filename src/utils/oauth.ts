@@ -2,9 +2,6 @@
 
 export const SPOTIFY_CLIENT_ID = '927fda6918514f96903e828fcd6bb576';
 // Dynamically match current origin + Vite base so it works locally and on Pages.
-// Make sure BOTH values are registered in your Spotify app settings:
-// - https://belisario-afk.github.io/SsR/
-// - http://localhost:5173/
 export const SPOTIFY_REDIRECT_URI = `${window.location.origin}${import.meta.env.BASE_URL}`;
 
 const SCOPE = [
@@ -15,8 +12,8 @@ const SCOPE = [
   'user-read-playback-state',
   'playlist-read-private',
   'user-read-currently-playing',
-  'app-remote-control',
-  'offline_access'
+  'app-remote-control'
+  // Note: do NOT include 'offline_access' — Spotify does not support it in scope
 ].join(' ');
 
 // Safe base64url encoding
@@ -82,7 +79,6 @@ export async function ensureSpotifyAuth(clientId: string, redirectUri: string) {
     const data = await res.json();
     if (data.access_token) {
       setToken(data.access_token, data.expires_in, data.refresh_token);
-      // Clean URL
       window.history.replaceState({}, document.title, redirectUri);
       return;
     } else {
@@ -105,8 +101,6 @@ export async function ensureSpotifyAuth(clientId: string, redirectUri: string) {
     authUrl.searchParams.set('code_challenge_method', 'S256');
     authUrl.searchParams.set('code_challenge', challenge);
     authUrl.searchParams.set('state', newState);
-    // Optional: minimize Spotify's dialog prompts
-    // authUrl.searchParams.set('show_dialog', 'false');
 
     window.location.href = authUrl.toString();
   }

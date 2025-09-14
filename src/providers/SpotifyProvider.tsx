@@ -40,12 +40,25 @@ async function loadSpotifySDK(): Promise<void> {
 
 async function fetchWebAPI(endpoint: string, method: 'GET' | 'PUT' | 'POST' = 'GET', body?: any) {
   let token = getAccessToken();
-  if (!token) throw new Error('No token');
-  // Attempt refreshing if token is older
+  if (!token) {
+    await ensureSpotifyAuth(SPOTIFY_CLIENT_ID, SPOTIFY_REDIRECT_URI);
+    token = getAccessToken();
+  }
   const issuedAt = Number(localStorage.getItem('spotify_token_issued_at') || '0');
   const expiresIn = Number(localStorage.getItem('spotify_token_expires_in') || '0');
-  if (Date.now() - issuedAt > (expiresIn - 60) * 1000) {
-    token = await refreshAccessToken();
+  const hasRefresh = !!localStorage.getItem('spotify_refresh_token');
+  if (expiresIn && issuedAt && Date.now() - issuedAt > (expiresIn - 60) * 1000) {
+    if (hasRefresh) {
+      try {
+        token = await refreshAccessToken();
+      } catch {
+        await ensureSpotifyAuth(SPOTIFY_CLIENT_ID, SPOTIFY_REDIRECT_URI);
+        token = getAccessToken();
+      }
+    } else {
+      await ensureSpotifyAuth(SPOTIFY_CLIENT_ID, SPOTIFY_REDIRECT_URI);
+      token = getAccessToken();
+    }
   }
   const res = await fetch(`https://api.spotify.com/v1/${endpoint}`, {
     method,
@@ -108,7 +121,6 @@ export function SpotifyProvider({ children }: { children: React.ReactNode }) {
       player.connect();
     };
     initialize();
-    // Cleanup on unmount
     return () => {
       playerRef.current?.disconnect?.();
     };
