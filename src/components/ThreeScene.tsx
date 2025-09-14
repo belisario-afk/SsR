@@ -90,7 +90,7 @@ export function ThreeScene() {
   const dynamicZoom = useMemo(() => {
     const kmh = (fix.speed || 0) * 3.6;
     const Z_MAX = 16;                   // closer-in when stopped
-    const Z_MIN = lowPower ? 13 : 14;   // farthest out allowed
+    const Z_MIN = lowPower ? 13 : 9;   // farthest out allowed
     // Drop ~1 zoom level every 40 km/h
     const z = Z_MAX - kmh / 40;
     return Math.round(THREE.MathUtils.clamp(z, Z_MIN, Z_MAX));
