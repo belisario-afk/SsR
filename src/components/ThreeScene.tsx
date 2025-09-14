@@ -84,6 +84,18 @@ export function ThreeScene() {
   // Heading degrees (0 = north, clockwise) to radians for Y-rotation
   const headingRad = useMemo(() => THREE.MathUtils.degToRad(fix.heading || 0), [fix.heading]);
 
+  // Dynamic map zoom:
+  // - Z_MAX when stopped, gradually zooms out as speed increases.
+  // - Clamp to a wider view so it’s not “too zoomed in”.
+  const dynamicZoom = useMemo(() => {
+    const kmh = (fix.speed || 0) * 3.6;
+    const Z_MAX = 16;                   // closer-in when stopped
+    const Z_MIN = lowPower ? 13 : 14;   // farthest out allowed
+    // Drop ~1 zoom level every 40 km/h
+    const z = Z_MAX - kmh / 40;
+    return Math.round(THREE.MathUtils.clamp(z, Z_MIN, Z_MAX));
+  }, [fix.speed, lowPower]);
+
   // FX density
   const starsCount = lowPower ? 800 : 2000 + Math.round(intensity * 3000);
   const sparklesCount = lowPower ? 30 : 50 + Math.round(intensity * 100);
@@ -114,15 +126,14 @@ export function ThreeScene() {
         <Environment files="env/studio.hdr" background={false} />
       </Suspense>
 
-      {/* Map floor centered on GPS; uses dead-reckoning internally for smoothness */}
+      {/* Map floor centered on GPS; dynamic zoom for wider view */}
       <Suspense fallback={null}>
         <MapFloor
           center={{ lat: fix.lat, lon: fix.lon }}
           speed={fix.speed}
           headingRad={headingRad}
-          zoom={17}
+          zoom={dynamicZoom}         // <-- change this to 15 for a fixed wide view
           y={-2}
-          // Plane size auto-matches 3 tiles at your zoom/latitude for precise scale.
           tileTemplate="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
           lowPower={lowPower}
           throttleMs={lowPower ? 1000 : 300}
