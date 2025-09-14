@@ -10,17 +10,20 @@ type CarModelProps = {
   yOffset?: number;       // Nudge up/down if needed
 };
 
-// Build a base-aware URL for Vite (works for / and /repo/ on GitHub Pages)
-// Note: We construct as a path string; do NOT use new URL() because BASE_URL
-// is a pathname (e.g., "/repo/") not an absolute URL.
-function getDefaultModelUrl() {
-  const viteBase = (import.meta as any)?.env?.BASE_URL as string | undefined;
-  const base = (viteBase && typeof viteBase === 'string' ? viteBase : '/').replace(/\/+$/, '');
-  // base is now "" (for "/") or "/repo"
-  return `${base}/models/hitem3d.glb`;
+// Resolve a relative path (no leading slash) against the current page base.
+// Example: base https://belisario-afk.github.io/SsR/ + "models/hitem3d.glb" -> https://belisario-afk.github.io/SsR/models/hitem3d.glb
+function resolveAgainstBase(relativePath: string) {
+  if (typeof document !== 'undefined') {
+    try {
+      return new URL(relativePath, document.baseURI).toString();
+    } catch {
+      // fall through
+    }
+  }
+  return relativePath;
 }
 
-const defaultUrl = getDefaultModelUrl();
+const defaultUrl = resolveAgainstBase('models/hitem3d.glb');
 
 export function CarModel({ url = defaultUrl, targetSize = 3.8, spin = true, yOffset = 0 }: CarModelProps) {
   const gltf = useGLTF(url) as any;
@@ -55,5 +58,5 @@ export function CarModel({ url = defaultUrl, targetSize = 3.8, spin = true, yOff
   );
 }
 
-// Preload (base-aware)
+// Preload with the resolved URL as well
 useGLTF.preload(defaultUrl);
