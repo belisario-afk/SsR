@@ -10,12 +10,13 @@ type CarModelProps = {
   yOffset?: number;       // Nudge up/down if needed
 };
 
-// Compute a base-aware default URL that works on both user pages (/) and project pages (/repo/).
+// Build a base-aware URL for Vite (works for / and /repo/ on GitHub Pages)
+// Note: We construct as a path string; do NOT use new URL() because BASE_URL
+// is a pathname (e.g., "/repo/") not an absolute URL.
 function getDefaultModelUrl() {
-  // Try Vite/Cra envs
-  const viteBase = (typeof import.meta !== 'undefined' && (import.meta as any)?.env?.BASE_URL) || '';
-  const craBase = (typeof process !== 'undefined' && (process as any)?.env?.PUBLIC_URL) || '';
-  const base = (viteBase || craBase || '/').replace(/\/+$/, '');
+  const viteBase = (import.meta as any)?.env?.BASE_URL as string | undefined;
+  const base = (viteBase && typeof viteBase === 'string' ? viteBase : '/').replace(/\/+$/, '');
+  // base is now "" (for "/") or "/repo"
   return `${base}/models/hitem3d.glb`;
 }
 
