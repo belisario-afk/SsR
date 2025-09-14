@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   CanvasTexture,
   DoubleSide,
@@ -13,15 +13,11 @@ import {
 import { useThree } from '@react-three/fiber';
 
 type AlbumFloorProps = {
-  size?: number;     // plane size in world units
-  y?: number;        // vertical offset
-  imageUrl?: string; // optional override; otherwise uses Media Session artwork
+  size?: number;
+  y?: number;
+  imageUrl?: string;
 };
 
-/**
- * Tries to read current album art from the Media Session API if no prop is provided.
- * Falls back to a simple generated gradient.
- */
 function useAlbumArtUrl(explicit?: string) {
   const [url, setUrl] = useState<string | null>(explicit ?? null);
 
@@ -60,7 +56,6 @@ export function AlbumFloor({ size = 80, y = -2, imageUrl }: AlbumFloorProps) {
   const url = useAlbumArtUrl(imageUrl);
   const { gl } = useThree();
 
-  // Load or create texture
   useEffect(() => {
     let disposed = false;
 
@@ -96,7 +91,6 @@ export function AlbumFloor({ size = 80, y = -2, imageUrl }: AlbumFloorProps) {
     };
   }, [url]);
 
-  // Attach texture to material when ready
   useEffect(() => {
     if (!meshRef.current || !texture) return;
     meshRef.current.material.map = texture;

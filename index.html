@@ -2,25 +2,37 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <!-- CSP tightened for current stack; added GitHub Releases domains for GLB fetch -->
+
+    <!-- CSP tightened for Spotify + GitHub Releases, no map tiles -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self' https://api.spotify.com https://accounts.spotify.com https://sdk.scdn.co https://*.scdn.co; img-src 'self' data: blob: https://*.scdn.co; media-src 'self' blob: data:; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://sdk.scdn.co blob:; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; connect-src 'self' blob: https://api.spotify.com https://accounts.spotify.com https://sdk.scdn.co https://*.scdn.co https://api.open-meteo.com https://github.com https://objects.githubusercontent.com ws:; font-src 'self' data:; upgrade-insecure-requests"
+      content="default-src 'self' https://api.spotify.com https://accounts.spotify.com https://sdk.scdn.co https://*.scdn.co;
+               img-src 'self' data: blob: https://*.scdn.co https://objects.githubusercontent.com https://github.com;
+               media-src 'self' blob: data:;
+               script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://sdk.scdn.co blob:;
+               worker-src 'self' blob:;
+               style-src 'self' 'unsafe-inline';
+               connect-src 'self' blob: https://api.spotify.com https://accounts.spotify.com https://sdk.scdn.co https://*.scdn.co https://api.open-meteo.com https://github.com https://objects.githubusercontent.com ws:;
+               font-src 'self' data:;
+               upgrade-insecure-requests"
     />
+
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
     <meta name="theme-color" content="#000000" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="description" content="SsR Opel Z — 3D animated stereo/dashboard experience." />
+    <meta name="description" content="SsR — 3D dashboard with Spotify integration." />
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <link rel="shortcut icon" type="image/svg+xml" href="favicon.svg" />
+    <!-- Make manifest relative to base to avoid 401 on subpaths -->
     <link rel="manifest" href="manifest.webmanifest" />
-    <title>SsR Opel Z</title>
+    <title>SsR</title>
   </head>
   <body class="bg-black">
-    <noscript>Enable JavaScript to run SsR Opel Z.</noscript>
+    <noscript>Enable JavaScript to run SsR.</noscript>
     <div id="root"></div>
+    <!-- Vite will rewrite this with the correct base during build -->
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

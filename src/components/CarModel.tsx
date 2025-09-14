@@ -12,16 +12,14 @@ import {
 import { useFrame } from '@react-three/fiber';
 
 type CarModelProps = {
-  url?: string;           // GLB URL
-  targetSize?: number;    // Fit longest dimension to this world-unit size
-  spin?: boolean;         // Gently rotate the model
-  yOffset?: number;       // Nudge up/down if needed
-  glossyBlack?: boolean;  // Force glossy black material override
-  lowPower?: boolean;     // Cheaper material shader on low-power devices
+  url?: string;
+  targetSize?: number;
+  spin?: boolean;
+  yOffset?: number;
+  glossyBlack?: boolean;
+  lowPower?: boolean;
 };
 
-// Prefer external URL (GitHub Releases or CDN) to avoid 100MB repo limit.
-// Set VITE_MODEL_URL in your .env to override.
 const DEFAULT_EXTERNAL_URL =
   import.meta.env.VITE_MODEL_URL ??
   'https://github.com/belisario-afk/SsR/releases/download/model-assets/hitem3d.glb';
@@ -29,10 +27,10 @@ const DEFAULT_EXTERNAL_URL =
 export function CarModel({
   url = DEFAULT_EXTERNAL_URL,
   targetSize = 3.8,
-  spin = true,
+  spin = false,
   yOffset = 0,
   glossyBlack = true,
-  lowPower = false
+  lowPower = true
 }: CarModelProps) {
   const gltf = useGLTF(url) as any;
 
@@ -40,7 +38,6 @@ export function CarModel({
   const modelGroup = useRef<Group>(null!);
   const glossApplied = useRef(false);
 
-  // Replace all materials; choose cheaper shader on low-power
   useLayoutEffect(() => {
     if (!glossyBlack || !modelGroup.current || glossApplied.current) return;
 
@@ -107,5 +104,4 @@ export function CarModel({
   );
 }
 
-// Important for cross-origin fetches
 useGLTF.preload(DEFAULT_EXTERNAL_URL);

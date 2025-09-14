@@ -1,26 +1,25 @@
 {
-  "extends": "./tsconfig.node.json",
   "compilerOptions": {
-    "target": "ES2020",
-    "lib": ["ES2020", "DOM", "DOM.Iterable", "WebWorker"],
+    "target": "ESNext",
+    "useDefineForClassFields": true,
+    "lib": ["ESNext", "DOM"],
     "module": "ESNext",
+    "skipLibCheck": true,
     "jsx": "react-jsx",
     "moduleResolution": "Bundler",
     "resolveJsonModule": true,
-    "allowJs": false,
-    "strict": true,
-    "noUncheckedIndexedAccess": true,
-    "noImplicitOverride": true,
+    "isolatedModules": true,
     "noEmit": true,
-    "types": ["vite/client", "vitest/globals", "@testing-library/jest-dom"],
+    "strict": true,
     "baseUrl": ".",
     "paths": {
-      "@assets/*": ["src/assets/*"],
+      "@styles/*": ["src/styles/*"],
       "@components/*": ["src/components/*"],
+      "@config/*": ["src/config/*"],
       "@providers/*": ["src/providers/*"],
-      "@utils/*": ["src/utils/*"],
-      "@styles/*": ["src/styles/*"]
-    }
+      "@utils/*": ["src/utils/*"]
+    },
+    "types": ["vite/client"]
   },
-  "include": ["src", "types", "vitest.config.ts"]
+  "include": ["src"]
 }

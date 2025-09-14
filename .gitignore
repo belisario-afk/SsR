@@ -15,9 +15,7 @@ pnpm-debug.log*
 .idea
 
 # Env
-.env
-.env.*
-!.env.example
+
 
 # Mac
 .DS_Store"public/models/*.glb" 

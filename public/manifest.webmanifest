@@ -1,18 +1,17 @@
 {
-  "name": "SsR Opel Z",
-  "short_name": "SsR Z",
+  "name": "SsR",
+  "short_name": "SsR",
   "start_url": ".",
-  "scope": ".",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#000000",
-  "description": "3D animated stereo/dashboard experience. Optimized for Samsung Galaxy Tab SMT77U.",
+  "description": "3D dashboard with Spotify integration.",
   "icons": [
     {
       "src": "favicon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ]
 }

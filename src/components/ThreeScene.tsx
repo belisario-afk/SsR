@@ -37,12 +37,10 @@ export function ThreeScene() {
   const lowPower = useLowPowerMode();
   const { theme } = useTheme();
 
-  // Optional: if you still feed GPS heading elsewhere, you can rotate the car here.
-  const headingRad = 0; // keep 0 for stability/perf on tablet
+  const headingRad = useMemo(() => 0, []);
 
   return (
     <Canvas
-      // Aggressive perf settings for SM‑T772U
       dpr={1}
       gl={{
         antialias: false,
@@ -59,32 +57,26 @@ export function ThreeScene() {
       <fog attach="fog" args={['#000000', 10, 50]} />
       <PerspectiveCamera makeDefault fov={62} position={[0, 1.5, 6.5]} />
 
-      {/* Lights tuned for glossy reflections but kept cheap */}
       <ambientLight intensity={0.45} />
       <hemisphereLight color={theme.colors.primaryHex} groundColor="#0f0f0f" intensity={0.75} />
-      {/* Subtle rim light for body definition */}
       <directionalLight position={[0, 3, -4]} intensity={0.5} color="#ffffff" />
 
-      {/* Local HDRI — place public/env/studio.hdr */}
       <Suspense fallback={null}>
         <Environment files="env/studio.hdr" background={false} />
       </Suspense>
 
-      {/* Floor = current album artwork */}
       <Suspense fallback={null}>
         <AlbumFloor size={80} y={-2} />
       </Suspense>
 
-      {/* Car (glossy material handled in CarModel) */}
       <ErrorBoundary fallback={<TorusFallback />}>
         <Suspense fallback={null}>
           <group rotation-y={headingRad}>
-            <CarModel targetSize={3.8} spin={false} glossyBlack lowPower />
+            <CarModel targetSize={3.8} spin={false} glossyBlack lowPower={lowPower} />
           </group>
         </Suspense>
       </ErrorBoundary>
 
-      {/* Controls kept basic; no damping to avoid continuous re-renders */}
       <OrbitControls enablePan={false} enableZoom={false} enableDamping={false} maxPolarAngle={Math.PI / 2.2} />
     </Canvas>
   );
