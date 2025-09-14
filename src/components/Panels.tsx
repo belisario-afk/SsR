@@ -2,6 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '@providers/ThemeProvider';
 import { useUI } from '@providers/UIProvider';
+import { Dashboard } from '@components/Dashboard';
 
 type PanelsProps = {
   activeIndex: number;
@@ -58,24 +59,7 @@ export function Panels({ activeIndex }: PanelsProps) {
       <AnimatePresence mode="popLayout">
         {activeIndex === 0 && (
           <Panel key="dash" title="Dashboard">
-            <div className="grid grid-cols-2 tablet:grid-cols-3 gap-4">
-              <div className="rounded-xl border border-white/10 p-4">
-                <p className="text-white/70">Engine</p>
-                <p className="text-3xl font-bold">OP-Z</p>
-                <p className="text-xs text-white/50">Neon Dynamics Stable</p>
-              </div>
-              <div className="rounded-xl border border-white/10 p-4">
-                <p className="text-white/70">Mode</p>
-                <p className="text-3xl font-bold">Cruise</p>
-                <p className="text-xs text-white/50">Adaptive visuals</p>
-              </div>
-              <div className="rounded-xl border border-white/10 p-4 tablet:col-span-1 col-span-2">
-                <p className="text-white/70">Telemetry</p>
-                <div className="mt-2 h-16 bg-black/60 rounded-lg overflow-hidden">
-                  <div className="w-full h-full bg-gradient-to-r from-sky-500/40 via-fuchsia-500/30 to-emerald-500/40 animate-pulse" />
-                </div>
-              </div>
-            </div>
+            <Dashboard />
           </Panel>
         )}
         {activeIndex === 1 && (
@@ -93,9 +77,10 @@ export function Panels({ activeIndex }: PanelsProps) {
             <ul className="text-white/80 space-y-2">
               {demoMode && (
                 <>
-                  <li>Say: "play", "pause", "next", or "theme chase/starlight/romance"</li>
-                  <li>Swipe left/right to change panel — swipe up to cycle theme</li>
-                  <li>Use bottom-right buttons for Playlists or Player; pinch to show/hide the player</li>
+                  <li>Say: "play", "pause", "next", "previous", or "theme spy gadget"</li>
+                  <li>"volume 40%", "louder", "quieter", "mute", "unmute"</li>
+                  <li>"show player", "open playlists", "weather", "what time is it", "battery"</li>
+                  <li>"navigate to Starbucks", "toggle demo mode"</li>
                 </>
               )}
               {!demoMode && <li className="text-white/50">Demo instructions are hidden.</li>}

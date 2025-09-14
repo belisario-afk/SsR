@@ -13,9 +13,10 @@ type SpotifyContextType = {
   playing: boolean;
   track?: TrackInfo;
   volume: number;
-  setVolume: (v: number) => void;
+  setVolume: (v: number | ((prev: number) => number)) => void;
   togglePlay: () => Promise<void>;
   nextTrack: () => Promise<void>;
+  prevTrack: () => Promise<void>;
 };
 
 const SpotifyContext = createContext<SpotifyContextType | null>(null);
@@ -28,13 +29,13 @@ declare global {
 }
 
 async function loadSpotifySDK(): Promise<void> {
-  if (window.Spotify) return;
+  if ((window as any).Spotify) return;
   await new Promise<void>((resolve) => {
     const script = document.createElement('script');
     script.src = 'https://sdk.scdn.co/spotify-player.js';
     script.async = true;
     document.body.appendChild(script);
-    window.onSpotifyWebPlaybackSDKReady = () => resolve();
+    (window as any).onSpotifyWebPlaybackSDKReady = () => resolve();
   });
 }
 
@@ -90,7 +91,7 @@ export function SpotifyProvider({ children }: { children: React.ReactNode }) {
       const token = getAccessToken();
       if (!token) return;
 
-      const player = new window.Spotify.Player({
+      const player = new (window as any).Spotify.Player({
         name: 'SsR Opel Z',
         getOAuthToken: (cb: (t: string) => void) => cb(getAccessToken() || ''),
         volume
@@ -130,6 +131,13 @@ export function SpotifyProvider({ children }: { children: React.ReactNode }) {
     playerRef.current?.setVolume?.(volume).catch(() => {});
   }, [volume]);
 
+  const setVolume: SpotifyContextType['setVolume'] = useCallback((v) => {
+    setVolumeState((prev) => {
+      const next = typeof v === 'function' ? (v as any)(prev) : v;
+      return Math.min(1, Math.max(0, next));
+    });
+  }, []);
+
   const togglePlay = useCallback(async () => {
     try {
       await fetchWebAPI('me/player/play', 'PUT');
@@ -150,6 +158,14 @@ export function SpotifyProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const prevTrack = useCallback(async () => {
+    try {
+      await fetchWebAPI('me/player/previous', 'POST');
+    } catch {
+      // ignored
+    }
+  }, []);
+
   const value = useMemo<SpotifyContextType>(
     () => ({
       isSpotifyReady,
@@ -157,11 +173,12 @@ export function SpotifyProvider({ children }: { children: React.ReactNode }) {
       playing,
       track,
       volume,
-      setVolume: setVolumeState,
+      setVolume,
       togglePlay,
-      nextTrack
+      nextTrack,
+      prevTrack
     }),
-    [isSpotifyReady, deviceActive, playing, track, volume, togglePlay, nextTrack]
+    [isSpotifyReady, deviceActive, playing, track, volume, setVolume, togglePlay, nextTrack, prevTrack]
   );
 
   return <SpotifyContext.Provider value={value}>{children}</SpotifyContext.Provider>;
