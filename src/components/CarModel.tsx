@@ -3,6 +3,8 @@ import { useGLTF, Center } from '@react-three/drei';
 import { Box3, Color, Group, Mesh, MeshPhysicalMaterial, MeshStandardMaterial, Vector3 } from 'three';
 import { useFrame } from '@react-three/fiber';
 import { ENV } from '@config/env';
+// Support EXT_meshopt_compression if the GLB was packed with gltfpack
+import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 
 // Join BASE_URL with a relative path (works on GitHub Pages "/SsR/")
 function baseJoin(rel: string) {
@@ -11,9 +13,6 @@ function baseJoin(rel: string) {
   const relTrimmed = rel.startsWith('/') ? rel.slice(1) : rel;
   return baseTrimmed + relTrimmed;
 }
-
-// Tell GLTFLoader where to load Draco decoders from (same-origin)
-useGLTF.setDecoderPath(baseJoin('draco/'));
 
 type CarModelProps = {
   url?: string;
@@ -34,7 +33,18 @@ export function CarModel({
   glossyBlack = true,
   lowPower = true
 }: CarModelProps) {
-  const gltf = useGLTF(url) as any;
+  // useGLTF signature: (path, useDraco?, useMeshopt?, extendLoader?)
+  // - useDraco: pass local decoder path (string) so it loads from same-origin (/SsR/draco/)
+  // - useMeshopt: true
+  // - extendLoader: set the Meshopt decoder on the GLTFLoader instance
+  const gltf = useGLTF(
+    url,
+    baseJoin('draco/'),
+    true,
+    (loader: any) => {
+      loader.setMeshoptDecoder?.(MeshoptDecoder);
+    }
+  ) as any;
 
   const sceneClone = useMemo(() => gltf.scene.clone(true), [gltf.scene]);
   const modelGroup = useRef<Group>(null!);
@@ -43,6 +53,7 @@ export function CarModel({
   useLayoutEffect(() => {
     if (!glossyBlack || !modelGroup.current || glossApplied.current) return;
 
+    // On low-power or Android devices, prefer Standard material for compatibility
     const makePhysical = () =>
       new MeshPhysicalMaterial({
         color: new Color('#121212'),
@@ -106,5 +117,12 @@ export function CarModel({
   );
 }
 
-// Preload model (uses the decoder path set above)
-useGLTF.preload(DEFAULT_EXTERNAL_URL);
+// Preload model with same loader configuration
+useGLTF.preload(
+  DEFAULT_EXTERNAL_URL,
+  baseJoin('draco/'),
+  true,
+  (loader: any) => {
+    loader.setMeshoptDecoder?.(MeshoptDecoder);
+  }
+);

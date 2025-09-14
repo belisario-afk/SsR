@@ -16,7 +16,8 @@ function useLowPowerMode() {
     const cores = navigator.hardwareConcurrency || 0;
     const smallRam = mem && mem <= 4;
     const fewCores = cores && cores <= 4;
-    setLow(Boolean(isAndroid && (isSamsungTab || smallRam || fewCores)) || smallRam || fewCores);
+    // Be more conservative: treat all Android (incl. Samsung tablets) as low-power
+    setLow(isAndroid || isSamsungTab || smallRam || fewCores);
   }, []);
   return low;
 }
@@ -35,7 +36,9 @@ export function ThreeScene() {
         alpha: false,
         stencil: false,
         depth: true,
-        failIfMajorPerformanceCaveat: true
+        // Allow context on devices flagged with "major performance caveat" (common on some Galaxy tablets)
+        failIfMajorPerformanceCaveat: false,
+        preserveDrawingBuffer: false
       }}
       onCreated={(state) => {
         // Prevent browser default behavior on context lost so R3F can restore.
@@ -57,7 +60,6 @@ export function ThreeScene() {
       </Suspense>
 
       <Suspense fallback={null}>
-        {/* Wire album art directly from SpotifyProvider; fall back to optional test URL if set */}
         <AlbumFloor size={80} y={-2} imageUrl={track?.albumImage || (ENV as any).ALBUM_TEST_URL || undefined} />
       </Suspense>
 
