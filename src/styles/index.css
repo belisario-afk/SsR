@@ -1,18 +1,29 @@
-/* Base styles; keep or replace with your Tailwind entry if you use Tailwind */
-:root, html, body, #root { height: 100%; }
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-*, *::before, *::after { box-sizing: border-box; }
-
-html { color-scheme: dark; }
-
-body {
-  margin: 0;
-  background: #000;
-  color: #e6e6e6;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
-  line-height: 1.4;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/* Global styling, optimized for tablet hit targets */
+:root {
+  --panel-blur: 10px;
 }
 
-canvas { display: block; }
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000000;
+  color-scheme: dark;
+}
+
+button, [role="button"] {
+  -webkit-tap-highlight-color: transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: #222;
+  border-radius: 6px;
+}
