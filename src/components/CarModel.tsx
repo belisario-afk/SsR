@@ -4,13 +4,16 @@ import { Group, Box3, Vector3 } from 'three';
 import { useFrame } from '@react-three/fiber';
 
 type CarModelProps = {
-  url?: string;           // Path to your GLB
+  url?: string;           // Path to your GLB (defaults to BASE_URL + models/hitem3d.glb)
   targetSize?: number;    // Fit longest dimension to this world-unit size
   spin?: boolean;         // Gently rotate the model
   yOffset?: number;       // Nudge up/down if needed
 };
 
-export function CarModel({ url = '/models/hitem3d.glb', targetSize = 3.8, spin = true, yOffset = 0 }: CarModelProps) {
+// Build a URL that respects the site base (GitHub Pages subpaths, etc.)
+const defaultUrl = new URL('models/hitem3d.glb', import.meta.env.BASE_URL).toString();
+
+export function CarModel({ url = defaultUrl, targetSize = 3.8, spin = true, yOffset = 0 }: CarModelProps) {
   // Load GLB (same-origin fetch, works with your CSP)
   const gltf = useGLTF(url) as any;
 
@@ -35,13 +38,11 @@ export function CarModel({ url = '/models/hitem3d.glb', targetSize = 3.8, spin =
   useFrame((state) => {
     if (!spin || !modelGroup.current) return;
     const t = state.clock.getElapsedTime();
-    // Subtle breathing/rotate motion
     modelGroup.current.rotation.y = t * 0.2;
   });
 
   return (
     <group position-y={yOffset}>
-      {/* Centers model so (0,0,0) is in its middle */}
       <Center>
         <group ref={modelGroup}>
           <primitive object={sceneClone} />
@@ -51,5 +52,5 @@ export function CarModel({ url = '/models/hitem3d.glb', targetSize = 3.8, spin =
   );
 }
 
-// Preload default path (optional)
-useGLTF.preload('/models/hitem3d.glb');
+// Preload default path (optional, also uses BASE_URL-safe URL)
+useGLTF.preload(defaultUrl);
