@@ -3,6 +3,8 @@ import { Canvas } from '@react-three/fiber';
 import { Environment, OrbitControls, PerspectiveCamera } from '@react-three/drei';
 import { CarModel } from '@components/CarModel';
 import { AlbumFloor } from '@components/AlbumFloor';
+import { ENV } from '@config/env';
+import { useSpotify } from '@providers/SpotifyProvider';
 
 function useLowPowerMode() {
   const [low, setLow] = useState(false);
@@ -22,6 +24,7 @@ function useLowPowerMode() {
 export function ThreeScene() {
   const lowPower = useLowPowerMode();
   const headingRad = useMemo(() => 0, []);
+  const { track } = useSpotify();
 
   return (
     <Canvas
@@ -54,7 +57,8 @@ export function ThreeScene() {
       </Suspense>
 
       <Suspense fallback={null}>
-        <AlbumFloor size={80} y={-2} />
+        {/* Wire album art directly from SpotifyProvider; fall back to optional test URL if set */}
+        <AlbumFloor size={80} y={-2} imageUrl={track?.albumImage || (ENV as any).ALBUM_TEST_URL || undefined} />
       </Suspense>
 
       <Suspense fallback={null}>
