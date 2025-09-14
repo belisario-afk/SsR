@@ -20,4 +20,4 @@ pnpm-debug.log*
 !.env.example
 
 # Mac
-.DS_Store
+.DS_Store"public/models/*.glb" 

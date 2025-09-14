@@ -20,19 +20,14 @@ type CarModelProps = {
   lowPower?: boolean;     // Cheaper material shader on low-power devices
 };
 
-function resolveAgainstBase(relativePath: string) {
-  if (typeof document !== 'undefined') {
-    try {
-      return new URL(relativePath, document.baseURI).toString();
-    } catch {}
-  }
-  return relativePath;
-}
-
-const defaultUrl = resolveAgainstBase('models/hitem3d.glb');
+// Prefer external URL (GitHub Releases or CDN) to avoid 100MB repo limit.
+// Set VITE_MODEL_URL in your .env to override.
+const DEFAULT_EXTERNAL_URL =
+  import.meta.env.VITE_MODEL_URL ??
+  'https://github.com/belisario-afk/SsR/releases/download/model-assets/hitem3d.glb';
 
 export function CarModel({
-  url = defaultUrl,
+  url = DEFAULT_EXTERNAL_URL,
   targetSize = 3.8,
   spin = true,
   yOffset = 0,
@@ -78,7 +73,7 @@ export function CarModel({
       else old?.dispose?.();
 
       mesh.material = newMat();
-      (mesh as any).castShadow = false;   // shadows disabled in low-power scene anyway
+      (mesh as any).castShadow = false;
       (mesh as any).receiveShadow = false;
     });
 
@@ -112,4 +107,5 @@ export function CarModel({
   );
 }
 
-useGLTF.preload(defaultUrl);
+// Important for cross-origin fetches
+useGLTF.preload(DEFAULT_EXTERNAL_URL);

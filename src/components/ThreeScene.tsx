@@ -1,14 +1,13 @@
 import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { Effects, Environment, OrbitControls, PerspectiveCamera, Sparkles, Stars } from '@react-three/drei';
+import { Environment, OrbitControls, PerspectiveCamera } from '@react-three/drei';
 import * as THREE from 'three';
 import { useTheme } from '@providers/ThemeProvider';
-import { useSpeed } from '@providers/SpeedProvider';
 import { CarModel } from '@components/CarModel';
 import { ErrorBoundary } from '@components/ErrorBoundary';
-import { MapFloor } from '@components/MapFloor';
+import { AlbumFloor } from '@components/AlbumFloor';
 
-// Heuristic: treat many Android tablets/low-end devices as "low power"
+// Heuristic: treat Android tablets/low-end devices as "low power"
 function useLowPowerMode() {
   const [low, setLow] = useState(false);
   useEffect(() => {
@@ -24,47 +23,6 @@ function useLowPowerMode() {
   return low;
 }
 
-// Geolocation gated behind user gesture; high accuracy, low cache
-type GeoFix = { lat: number; lon: number; heading: number; speed: number; ts: number };
-function useGPS(initial: GeoFix = { lat: 34.6509, lon: -120.4544, heading: 0, speed: 0, ts: Date.now() }) {
-  const [enabled, setEnabled] = useState(false);
-  const [fix, setFix] = useState<GeoFix>(initial);
-
-  useEffect(() => {
-    const onFirstGesture = () => setEnabled(true);
-    window.addEventListener('pointerdown', onFirstGesture, { once: true });
-    window.addEventListener('keydown', onFirstGesture, { once: true });
-    return () => {
-      window.removeEventListener('pointerdown', onFirstGesture);
-      window.removeEventListener('keydown', onFirstGesture);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!enabled || !('geolocation' in navigator)) return;
-    const watchId = navigator.geolocation.watchPosition(
-      (pos) => {
-        const { latitude, longitude, heading, speed } = pos.coords;
-        setFix({
-          lat: latitude,
-          lon: longitude,
-          heading: typeof heading === 'number' && !Number.isNaN(heading) ? heading : 0,
-          speed: typeof speed === 'number' && !Number.isNaN(speed) && speed != null ? speed : 0, // m/s
-          ts: pos.timestamp || Date.now(),
-        });
-      },
-      (err) => {
-        // eslint-disable-next-line no-console
-        console.warn('Geolocation error:', err);
-      },
-      { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
-    );
-    return () => navigator.geolocation.clearWatch(watchId);
-  }, [enabled]);
-
-  return fix;
-}
-
 function TorusFallback() {
   const { theme } = useTheme();
   return (
@@ -77,78 +35,57 @@ function TorusFallback() {
 
 export function ThreeScene() {
   const lowPower = useLowPowerMode();
-  const { intensity } = useSpeed();
   const { theme } = useTheme();
-  const fix = useGPS();
 
-  // Heading degrees (0 = north, clockwise) to radians for Y-rotation
-  const headingRad = useMemo(() => THREE.MathUtils.degToRad(fix.heading || 0), [fix.heading]);
-
-  // Force a much wider map view
-  const WIDE_ZOOM = 12; // lower = wider (try 11 or 10 for even more)
-  // Option: if you want dynamic zoom, replace with a computed value.
-
-  // FX density
-  const starsCount = lowPower ? 800 : 2000 + Math.round(intensity * 3000);
-  const sparklesCount = lowPower ? 30 : 50 + Math.round(intensity * 100);
+  // Optional: if you still feed GPS heading elsewhere, you can rotate the car here.
+  const headingRad = 0; // keep 0 for stability/perf on tablet
 
   return (
     <Canvas
-      dpr={lowPower ? 1 : [1, 2]} // Clamp DPR on low-power
+      // Aggressive perf settings for SM‑T772U
+      dpr={1}
       gl={{
-        antialias: !lowPower,
+        antialias: false,
         powerPreference: 'high-performance',
         alpha: false,
         stencil: false,
         depth: true,
+        failIfMajorPerformanceCaveat: true,
       }}
-      performance={{ min: lowPower ? 0.2 : 0.5 }}
-      shadows={false} // keep cheap
+      performance={{ min: 0.3 }}
+      shadows={false}
     >
       <color attach="background" args={[0, 0, 0]} />
-      <PerspectiveCamera makeDefault fov={lowPower ? 65 : 60} position={[0, 1.8, lowPower ? 7.5 : 7]} />
+      <fog attach="fog" args={['#000000', 10, 50]} />
+      <PerspectiveCamera makeDefault fov={62} position={[0, 1.5, 6.5]} />
 
-      {/* Lights tuned for glossy black reflections */}
-      <ambientLight intensity={lowPower ? 0.4 : 0.35} />
-      <hemisphereLight color={theme.colors.primaryHex} groundColor="#111111" intensity={lowPower ? 0.8 : 0.7} />
-      <directionalLight position={[-4, 3, -2]} intensity={lowPower ? 0.6 : 0.8} color={theme.colors.accentHex} />
+      {/* Lights tuned for glossy reflections but kept cheap */}
+      <ambientLight intensity={0.45} />
+      <hemisphereLight color={theme.colors.primaryHex} groundColor="#0f0f0f" intensity={0.75} />
+      {/* Subtle rim light for body definition */}
+      <directionalLight position={[0, 3, -4]} intensity={0.5} color="#ffffff" />
 
       {/* Local HDRI — place public/env/studio.hdr */}
       <Suspense fallback={null}>
         <Environment files="env/studio.hdr" background={false} />
       </Suspense>
 
-      {/* Map floor centered on GPS; significantly wider zoom */}
+      {/* Floor = current album artwork */}
       <Suspense fallback={null}>
-        <MapFloor
-          center={{ lat: fix.lat, lon: fix.lon }}
-          speed={fix.speed}
-          headingRad={headingRad}
-          zoom={WIDE_ZOOM}        // << wider view
-          y={-2}
-          tileTemplate="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-          lowPower={lowPower}
-          throttleMs={lowPower ? 1000 : 300}
-          resScale={lowPower ? 0.5 : 1}
-        />
+        <AlbumFloor size={80} y={-2} />
       </Suspense>
 
-      {/* Car (glossy black handled in CarModel), rotated by heading; fixed at origin */}
+      {/* Car (glossy material handled in CarModel) */}
       <ErrorBoundary fallback={<TorusFallback />}>
         <Suspense fallback={null}>
           <group rotation-y={headingRad}>
-            <CarModel targetSize={3.8} spin={false} glossyBlack lowPower={lowPower} />
+            <CarModel targetSize={3.8} spin={false} glossyBlack lowPower />
           </group>
         </Suspense>
       </ErrorBoundary>
 
-      {/* Background FX */}
-      <Stars radius={120} depth={50} count={starsCount} factor={lowPower ? 1.5 : 2} saturation={0} fade speed={0.2 + (lowPower ? 0.6 : intensity * 1.2)} />
-      {!lowPower && <Sparkles size={2} speed={0.4 + intensity} count={sparklesCount} color={theme.colors.accentHex} scale={[8, 4, 8]} />}
-
-      {!lowPower && <Effects disableGamma />}
-
-      <OrbitControls enablePan={false} enableZoom={false} maxPolarAngle={Math.PI / 2.2} />
+      {/* Controls kept basic; no damping to avoid continuous re-renders */}
+      <OrbitControls enablePan={false} enableZoom={false} enableDamping={false} maxPolarAngle={Math.PI / 2.2} />
     </Canvas>
   );
 }
