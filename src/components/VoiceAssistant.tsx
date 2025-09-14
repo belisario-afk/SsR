@@ -3,18 +3,12 @@ import { useSpotify } from '@providers/SpotifyProvider';
 import { useTheme } from '@providers/ThemeProvider';
 import { motion } from 'framer-motion';
 
-declare global {
-  interface Window {
-    webkitSpeechRecognition: any;
-  }
-}
-
 export function VoiceAssistant() {
   const { theme, setThemeByName, cycleTheme } = useTheme();
   const { togglePlay, nextTrack } = useSpotify();
   const [listening, setListening] = useState(false);
   const [transcript, setTranscript] = useState('');
-  const recRef = useRef<SpeechRecognition | null>(null);
+  const recRef = useRef<any>(null);
 
   useEffect(() => {
     // Greeting on first load
@@ -30,15 +24,15 @@ export function VoiceAssistant() {
   }, []);
 
   useEffect(() => {
-    const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) return;
+    const SR: any = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SR) return;
 
-    const rec: SpeechRecognition = new SpeechRecognition();
+    const rec: any = new SR();
     rec.lang = 'en-US';
     rec.continuous = false;
     rec.interimResults = true;
 
-    rec.onresult = (e: SpeechRecognitionEvent) => {
+    rec.onresult = (e: any) => {
       let text = '';
       for (let i = e.resultIndex; i < e.results.length; i++) text += e.results[i][0].transcript;
       setTranscript(text);
@@ -63,7 +57,7 @@ export function VoiceAssistant() {
   }, [togglePlay, nextTrack, setThemeByName, cycleTheme]);
 
   const toggleListen = () => {
-    const rec = recRef.current;
+    const rec: any = recRef.current;
     if (!rec) return;
     try {
       if (!listening) rec.start();

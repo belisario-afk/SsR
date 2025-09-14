@@ -15,11 +15,12 @@ const SCOPE = [
   'offline_access'
 ].join(' ');
 
+// Safe base64url encoding without indexed access (avoids TS undefined under noUncheckedIndexedAccess)
 function base64UrlEncode(buffer: ArrayBuffer) {
   const bytes = new Uint8Array(buffer);
   let str = '';
-  for (let i = 0; i < bytes.byteLength; i++) {
-    str += String.fromCharCode(bytes[i]);
+  for (const b of bytes) {
+    str += String.fromCharCode(b);
   }
   return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
@@ -31,7 +32,7 @@ async function sha256(plain: string) {
   return base64UrlEncode(hashBuffer);
 }
 
-function randString(length = 64) {
+function randString(length: number = 64) {
   const array = new Uint8Array(length);
   crypto.getRandomValues(array);
   return Array.from(array, (b) => ('0' + (b & 0xff).toString(16)).slice(-2)).join('');

@@ -14,20 +14,21 @@ export function GestureProvider({ children }: { children: React.ReactNode }) {
   const threshold = 40;
 
   const onTouchStart = useCallback((e: TouchEvent) => {
-    const t = e.changedTouches[0];
+    const t = e.changedTouches?.[0];
+    if (!t) return;
     touchStartX.current = t.clientX;
     touchStartY.current = t.clientY;
   }, []);
 
   const onTouchEnd = useCallback((e: TouchEvent) => {
-    const t = e.changedTouches[0];
+    const t = e.changedTouches?.[0];
+    if (!t) return;
     const dx = t.clientX - (touchStartX.current ?? t.clientX);
     const dy = t.clientY - (touchStartY.current ?? t.clientY);
 
     if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > threshold) {
       setPanelIndex((p) => Math.max(0, Math.min(2, p + (dx < 0 ? 1 : -1))));
     } else if (dy < -threshold) {
-      // swipe up to cycle theme handled via keyboard event dispatch
       const ev = new CustomEvent('ssr-cycle-theme');
       window.dispatchEvent(ev);
     }
