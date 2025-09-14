@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self' https://api.spotify.com https://accounts.spotify.com https://sdk.scdn.co https://*.scdn.co; img-src 'self' data: blob: https://*.scdn.co; media-src 'self' blob: data:; script-src 'self' 'unsafe-inline' https://sdk.scdn.co; style-src 'self' 'unsafe-inline'; connect-src 'self' https://api.spotify.com https://accounts.spotify.com https://sdk.scdn.co https://*.scdn.co ws:; font-src 'self' data:; frame-ancestors 'self'; upgrade-insecure-requests"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/>
+    <meta name="theme-color" content="#000000" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="description" content="SsR Opel Z — 3D animated stereo/dashboard experience for Samsung Galaxy Tab SMT77U." />
+    <link rel="icon" type="image/svg+xml" href="/SsR/favicon.svg" />
+    <link rel="manifest" href="/SsR/manifest.webmanifest" />
+    <title>SsR Opel Z</title>
+  </head>
+  <body class="bg-black">
+    <noscript>Enable JavaScript to run SsR Opel Z.</noscript>
+    <div id="root"></div>
+    <!-- Use project-relative path so dev server works; Vite will rewrite on build for Pages base -->
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
