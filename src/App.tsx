@@ -1,22 +1,25 @@
 import { SpeedProvider } from '@providers/SpeedProvider';
 import { SpotifyProvider } from '@providers/SpotifyProvider';
-import { ThemeProvider, useTheme } from '@providers/ThemeProvider';
+import { ThemeProvider } from '@providers/ThemeProvider';
 import { GestureProvider, useGesture } from '@providers/GestureProvider';
+import { UIProvider } from '@providers/UIProvider';
 import { VoiceAssistant } from '@components/VoiceAssistant';
 import { ThreeScene } from '@components/ThreeScene';
 import { Panels } from '@components/Panels';
 import { NowPlaying } from '@components/NowPlaying';
 import { SettingsPanel } from '@components/SettingsPanel';
 import { HUD } from '@components/HUD';
+import { FloatingButtons } from '@components/FloatingButtons';
+import { PlaylistPanel } from '@components/PlaylistPanel';
 import { useEffect } from 'react';
 import { requestFullscreenIfPossible } from '@utils/device';
+import { useTheme } from '@providers/ThemeProvider';
 
 function Root() {
-  const { panelIndex } = useGesture();
-  const { highContrast } = useTheme();
+  const { panelIndex, playerVisible, playlistVisible, setPlaylistVisible } = useGesture();
+  const { highContrast, theme } = useTheme();
 
   useEffect(() => {
-    // Request fullscreen on first user interaction (gesture-safe).
     const onInteract = () => {
       requestFullscreenIfPossible().catch(() => {});
       window.removeEventListener('pointerdown', onInteract);
@@ -34,7 +37,7 @@ function Root() {
   }, []);
 
   return (
-    <div className={highContrast ? 'dark contrast-more' : 'dark'}>
+    <div className={highContrast ? 'dark contrast-more' : 'dark'} style={{ backgroundColor: theme.colors.backgroundHex }}>
       <div className="relative h-screen w-screen overflow-hidden">
         <ThreeScene />
         <div className="absolute inset-0 pointer-events-none">
@@ -46,12 +49,17 @@ function Root() {
         <div className="absolute top-2 right-2">
           <SettingsPanel />
         </div>
-        <div className="absolute left-2 bottom-28 tablet:bottom-6">
-          <NowPlaying />
-        </div>
+        {playerVisible && (
+          <div className="absolute left-2 bottom-28 tablet:bottom-6">
+            <NowPlaying />
+          </div>
+        )}
         <div className="absolute left-1/2 -translate-x-1/2 bottom-2">
           <VoiceAssistant />
         </div>
+
+        <FloatingButtons />
+        <PlaylistPanel open={playlistVisible} onClose={() => setPlaylistVisible(false)} />
       </div>
     </div>
   );
@@ -63,7 +71,9 @@ export default function App() {
       <SpeedProvider>
         <SpotifyProvider>
           <GestureProvider>
-            <Root />
+            <UIProvider>
+              <Root />
+            </UIProvider>
           </GestureProvider>
         </SpotifyProvider>
       </SpeedProvider>

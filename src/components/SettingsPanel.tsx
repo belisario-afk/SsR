@@ -1,88 +1,55 @@
+import React, { useState } from 'react';
 import { useTheme } from '@providers/ThemeProvider';
-import { useState } from 'react';
-import { requestFullscreenIfPossible, exitFullscreenIfPossible } from '@utils/device';
+import { useUI } from '@providers/UIProvider';
 
 export function SettingsPanel() {
-  const { theme, setThemeByName, highContrast, setHighContrast, dockMode, setDockMode } = useTheme();
-  const [isOpen, setIsOpen] = useState(false);
+  const { theme, setThemeByName, cycleTheme } = useTheme();
+  const { demoMode, setDemoMode } = useUI();
+  const [open, setOpen] = useState(false);
 
-  const onFullscreen = async () => {
-    await requestFullscreenIfPossible();
-  };
-
-  const onExitFullscreen = async () => {
-    await exitFullscreenIfPossible();
-  };
+  const themes = ['Chase', 'Starlight', 'Romance', 'SpyGadget', 'Neon2D', 'Reactive'];
 
   return (
     <div className="pointer-events-auto">
       <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="h-12 w-12 rounded-xl border border-white/10 bg-black/60 text-white text-xl"
-        aria-expanded={isOpen}
-        aria-controls="settings-panel"
+        className="rounded-xl bg-black/60 text-white px-3 py-2 border border-white/15 hover:border-white/40"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
       >
-        ⚙
+        Settings ⚙
       </button>
-      {isOpen && (
-        <div
-          id="settings-panel"
-          className="mt-2 p-4 rounded-2xl w-[86vw] tablet:w-[420px]"
-          style={{
-            background: 'rgba(10,10,10,0.7)',
-            border: `1px solid ${theme.colors.primaryHex}33`,
-            backdropFilter: 'blur(10px)'
-          }}
-        >
-          <div className="text-white font-semibold mb-2">Settings</div>
-
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-white/80">Theme</span>
-              <select
-                className="bg-black/60 border border-white/10 rounded-lg px-2 py-1 text-white"
-                value={theme.name}
-                onChange={(e) => setThemeByName(e.target.value as any)}
-                aria-label="Theme"
-              >
-                <option>Chase</option>
-                <option>Starlight</option>
-                <option>Romance</option>
-              </select>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <span className="text-white/80">High Contrast</span>
-              <input type="checkbox" checked={highContrast} onChange={(e) => setHighContrast(e.target.checked)} aria-label="High contrast" />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <span className="text-white/80">Car Dock Mode</span>
-              <input
-                type="checkbox"
-                checked={dockMode}
-                onChange={(e) => {
-                  setDockMode(e.target.checked);
-                  if (e.target.checked) onFullscreen();
-                  else onExitFullscreen();
-                }}
-                aria-label="Car Dock Mode"
-              />
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button className="flex-1 rounded-lg px-3 py-2 bg-black/60 border border-white/10 text-white" onClick={onFullscreen}>
-                Fullscreen
+      {open && (
+        <div className="mt-2 w-72 rounded-xl bg-neutral-900 border border-white/10 p-3 shadow-xl">
+          <div className="mb-3">
+            <div className="text-white/70 text-sm mb-1">Theme</div>
+            <div className="flex flex-wrap gap-2">
+              {themes.map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setThemeByName(t)}
+                  className={`px-2 py-1 rounded border ${theme.name === t ? 'border-white/70' : 'border-white/20'} text-white/90`}
+                >
+                  {t}
+                </button>
+              ))}
+              <button onClick={cycleTheme} className="px-2 py-1 rounded border border-white/20 text-white/90">
+                Cycle
               </button>
-              <button className="flex-1 rounded-lg px-3 py-2 bg-black/60 border border-white/10 text-white" onClick={onExitFullscreen}>
-                Exit Fullscreen
-              </button>
-            </div>
-
-            <div className="text-xs text-white/60">
-              Tip: On Samsung Galaxy Tab SMT77U, enable "Keep screen on" in Developer Options for best experience. App also uses Wake Lock.
             </div>
           </div>
+
+          <div className="mb-3">
+            <label className="flex items-center gap-2 text-white/90">
+              <input
+                type="checkbox"
+                checked={demoMode}
+                onChange={(e) => setDemoMode(e.target.checked)}
+              />
+              Show demo instructions
+            </label>
+          </div>
+
+          <div className="text-xs text-white/40">Pinch to toggle player. Press P for Playlists, M for Player.</div>
         </div>
       )}
     </div>

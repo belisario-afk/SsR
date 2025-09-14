@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '@providers/ThemeProvider';
+import { useUI } from '@providers/UIProvider';
 
 type PanelsProps = {
   activeIndex: number;
@@ -29,9 +30,7 @@ function Panel({ title, children }: { title: string; children: React.ReactNode }
           border: `1px solid ${theme.colors.primaryHex}33`,
           boxShadow: `0 0 40px ${theme.colors.accentHex}33`,
           backdropFilter: 'blur(var(--panel-blur))',
-          // Animate blur via CSS var with clamp to avoid negative values from spring overshoot
           filter: 'blur(clamp(0px, var(--blur, 0px), 12px))',
-          // defaults
           ['--blur' as any]: '0px',
           ['--panel-blur' as any]: '10px'
         } as any
@@ -52,6 +51,8 @@ function Panel({ title, children }: { title: string; children: React.ReactNode }
 }
 
 export function Panels({ activeIndex }: PanelsProps) {
+  const { demoMode } = useUI();
+
   return (
     <div className="w-full">
       <AnimatePresence mode="popLayout">
@@ -90,9 +91,14 @@ export function Panels({ activeIndex }: PanelsProps) {
         {activeIndex === 2 && (
           <Panel key="assist" title="Assistant & Controls">
             <ul className="text-white/80 space-y-2">
-              <li>Say: "play", "pause", "next", or "theme chase/starlight/romance"</li>
-              <li>Swipe left/right to change panel — swipe up to cycle theme</li>
-              <li>Settings (top right): Fullscreen, High Contrast, Car Dock</li>
+              {demoMode && (
+                <>
+                  <li>Say: "play", "pause", "next", or "theme chase/starlight/romance"</li>
+                  <li>Swipe left/right to change panel — swipe up to cycle theme</li>
+                  <li>Use bottom-right buttons for Playlists or Player; pinch to show/hide the player</li>
+                </>
+              )}
+              {!demoMode && <li className="text-white/50">Demo instructions are hidden.</li>}
             </ul>
           </Panel>
         )}
