@@ -5,7 +5,7 @@ type TrackImage = { url: string; width?: number; height?: number };
 type TrackInfo = {
   name: string;
   artist: string;
-  albumImage?: string; // picked best-fit size for UI + AlbumFloor
+  albumImage?: string; // picked best-fit size for UI + HoloPlatter
 };
 
 type SpotifyContextType = {
@@ -14,10 +14,13 @@ type SpotifyContextType = {
   playing: boolean;
   track?: TrackInfo;
   volume: number;
+  positionMs: number;
+  durationMs: number;
   setVolume: (v: number | ((prev: number) => number)) => void;
   togglePlay: () => Promise<void>;
   nextTrack: () => Promise<void>;
   prevTrack: () => Promise<void>;
+  seekTo: (ms: number) => Promise<void>;
 };
 
 const SpotifyContext = createContext<SpotifyContextType | null>(null);
@@ -42,9 +45,7 @@ async function loadSpotifySDK(): Promise<void> {
 
 function pickBestImage(images: TrackImage[], desired: number): string | undefined {
   if (!images?.length) return undefined;
-  // Sort ascending by width if present
   const sorted = [...images].sort((a, b) => (a.width ?? 0) - (b.width ?? 0));
-  // Find first >= desired, else use the largest available
   const candidate = sorted.find((i) => (i.width ?? 0) >= desired) ?? sorted[sorted.length - 1];
   return candidate?.url;
 }
@@ -92,6 +93,8 @@ export function SpotifyProvider({ children }: { children: React.ReactNode }) {
   const [playing, setPlaying] = useState(false);
   const [track, setTrack] = useState<TrackInfo | undefined>(undefined);
   const [volume, setVolumeState] = useState(0.7);
+  const [positionMs, setPositionMs] = useState(0);
+  const [durationMs, setDurationMs] = useState(0);
   const playerRef = useRef<any>(null);
 
   useEffect(() => {
@@ -121,10 +124,10 @@ export function SpotifyProvider({ children }: { children: React.ReactNode }) {
         if (!state) return;
         setPlaying(!state.paused);
         setDeviceActive(true);
+        setPositionMs(state.position ?? 0);
+        setDurationMs(state.duration ?? 0);
         const t = state.track_window.current_track;
         const imgs: TrackImage[] = t?.album?.images ?? [];
-        // Heuristic: choose a mid/high size that looks crisp on floor but saves bytes.
-        // DPR-aware target: ~256px for DPR1, ~384-512px for higher DPR.
         const dpr = Math.min(3, window.devicePixelRatio || 1);
         const desired = Math.min(640, Math.max(256, Math.round(256 * dpr)));
         const bestUrl = pickBestImage(imgs, desired);
@@ -183,6 +186,16 @@ export function SpotifyProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const seekTo = useCallback(async (ms: number) => {
+    const clamped = Math.max(0, Math.min(ms, durationMs || ms));
+    try {
+      await fetchWebAPI(`me/player/seek?position_ms=${Math.floor(clamped)}`, 'PUT');
+      setPositionMs(clamped);
+    } catch {
+      // ignored
+    }
+  }, [durationMs]);
+
   const value = useMemo<SpotifyContextType>(
     () => ({
       isSpotifyReady,
@@ -190,12 +203,15 @@ export function SpotifyProvider({ children }: { children: React.ReactNode }) {
       playing,
       track,
       volume,
+      positionMs,
+      durationMs,
       setVolume,
       togglePlay,
       nextTrack,
-      prevTrack
+      prevTrack,
+      seekTo
     }),
-    [isSpotifyReady, deviceActive, playing, track, volume, setVolume, togglePlay, nextTrack, prevTrack]
+    [isSpotifyReady, deviceActive, playing, track, volume, positionMs, durationMs, setVolume, togglePlay, nextTrack, prevTrack, seekTo]
   );
 
   return <SpotifyContext.Provider value={value}>{children}</SpotifyContext.Provider>;

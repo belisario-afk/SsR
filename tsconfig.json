@@ -17,7 +17,8 @@
       "@components/*": ["src/components/*"],
       "@config/*": ["src/config/*"],
       "@providers/*": ["src/providers/*"],
-      "@utils/*": ["src/utils/*"]
+      "@utils/*": ["src/utils/*"],
+      "@materials/*": ["src/materials/*"]  // <-- add this line
     },
     "types": ["vite/client"]
   },
