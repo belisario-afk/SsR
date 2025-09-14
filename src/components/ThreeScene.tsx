@@ -84,17 +84,9 @@ export function ThreeScene() {
   // Heading degrees (0 = north, clockwise) to radians for Y-rotation
   const headingRad = useMemo(() => THREE.MathUtils.degToRad(fix.heading || 0), [fix.heading]);
 
-  // Dynamic map zoom:
-  // - Z_MAX when stopped, gradually zooms out as speed increases.
-  // - Clamp to a wider view so it’s not “too zoomed in”.
-  const dynamicZoom = useMemo(() => {
-    const kmh = (fix.speed || 0) * 3.6;
-    const Z_MAX = 16;                   // closer-in when stopped
-    const Z_MIN = lowPower ? 13 : 9;   // farthest out allowed
-    // Drop ~1 zoom level every 40 km/h
-    const z = Z_MAX - kmh / 40;
-    return Math.round(THREE.MathUtils.clamp(z, Z_MIN, Z_MAX));
-  }, [fix.speed, lowPower]);
+  // Force a much wider map view
+  const WIDE_ZOOM = 9; // lower = wider (try 11 or 10 for even more)
+  // Option: if you want dynamic zoom, replace with a computed value.
 
   // FX density
   const starsCount = lowPower ? 800 : 2000 + Math.round(intensity * 3000);
@@ -114,7 +106,7 @@ export function ThreeScene() {
       shadows={false} // keep cheap
     >
       <color attach="background" args={[0, 0, 0]} />
-      <PerspectiveCamera makeDefault fov={lowPower ? 65 : 60} position={[0, 1.5, lowPower ? 6.5 : 6]} />
+      <PerspectiveCamera makeDefault fov={lowPower ? 65 : 60} position={[0, 1.8, lowPower ? 7.5 : 7]} />
 
       {/* Lights tuned for glossy black reflections */}
       <ambientLight intensity={lowPower ? 0.4 : 0.35} />
@@ -126,13 +118,13 @@ export function ThreeScene() {
         <Environment files="env/studio.hdr" background={false} />
       </Suspense>
 
-      {/* Map floor centered on GPS; dynamic zoom for wider view */}
+      {/* Map floor centered on GPS; significantly wider zoom */}
       <Suspense fallback={null}>
         <MapFloor
           center={{ lat: fix.lat, lon: fix.lon }}
           speed={fix.speed}
           headingRad={headingRad}
-          zoom={dynamicZoom}         // <-- change this to 15 for a fixed wide view
+          zoom={WIDE_ZOOM}        // << wider view
           y={-2}
           tileTemplate="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
           lowPower={lowPower}
