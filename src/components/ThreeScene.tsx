@@ -16,7 +16,6 @@ function useLowPowerMode() {
     const cores = navigator.hardwareConcurrency || 0;
     const smallRam = mem && mem <= 4;
     const fewCores = cores && cores <= 4;
-    // Be more conservative: treat all Android (incl. Samsung tablets) as low-power
     setLow(isAndroid || isSamsungTab || smallRam || fewCores);
   }, []);
   return low;
@@ -36,7 +35,6 @@ export function ThreeScene() {
         alpha: false,
         stencil: false,
         depth: true,
-        // Allow context on devices flagged with "major performance caveat" (common on some Galaxy tablets)
         failIfMajorPerformanceCaveat: false,
         preserveDrawingBuffer: false
       }}
@@ -60,7 +58,17 @@ export function ThreeScene() {
       </Suspense>
 
       <Suspense fallback={null}>
-        <AlbumFloor size={80} y={-2} imageUrl={track?.albumImage || (ENV as any).ALBUM_TEST_URL || undefined} />
+        {/* Album cover wired to Spotify track artwork, with interactive zoom (wheel/pinch).
+           Default scale slightly smaller for a “zoomed-out” look. */}
+        <AlbumFloor
+          size={80}
+          y={-2}
+          imageUrl={track?.albumImage || (ENV as any).ALBUM_TEST_URL || undefined}
+          coverScale={0.75}
+          interactive
+          minScale={0.3}
+          maxScale={1.0}
+        />
       </Suspense>
 
       <Suspense fallback={null}>
