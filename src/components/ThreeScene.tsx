@@ -8,9 +8,27 @@ import { CarModel } from '@components/CarModel';
 import { ErrorBoundary } from '@components/ErrorBoundary';
 import { MapFloor } from '@components/MapFloor';
 
-function useGPS(initial = { lat: 34.6509, lon: -120.4544, heading: 0 }) {
+// Heuristic: treat many Android tablets/low-end devices as "low power"
+function useLowPowerMode() {
+  const [low, setLow] = useState(false);
+  useEffect(() => {
+    const ua = navigator.userAgent || '';
+    const isAndroid = /Android/i.test(ua);
+    const isSamsungTab = /(SM\-T|Samsung|Galaxy Tab)/i.test(ua);
+    const mem = (navigator as any).deviceMemory || 0; // 2/4/8
+    const cores = navigator.hardwareConcurrency || 0;
+    const smallRam = mem && mem <= 4;
+    const fewCores = cores && cores <= 4;
+    setLow(Boolean(isAndroid && (isSamsungTab || smallRam || fewCores)) || smallRam || fewCores);
+  }, []);
+  return low;
+}
+
+// Geolocation gated behind user gesture; high accuracy, low cache
+type GeoFix = { lat: number; lon: number; heading: number; speed: number; ts: number };
+function useGPS(initial: GeoFix = { lat: 34.6509, lon: -120.4544, heading: 0, speed: 0, ts: Date.now() }) {
   const [enabled, setEnabled] = useState(false);
-  const [coords, setCoords] = useState(initial);
+  const [fix, setFix] = useState<GeoFix>(initial);
 
   useEffect(() => {
     const onFirstGesture = () => setEnabled(true);
@@ -26,23 +44,25 @@ function useGPS(initial = { lat: 34.6509, lon: -120.4544, heading: 0 }) {
     if (!enabled || !('geolocation' in navigator)) return;
     const watchId = navigator.geolocation.watchPosition(
       (pos) => {
-        const { latitude, longitude, heading } = pos.coords;
-        setCoords((c) => ({
-          lat: latitude ?? c.lat,
-          lon: longitude ?? c.lon,
-          heading: typeof heading === 'number' && !Number.isNaN(heading) ? heading : c.heading,
-        }));
+        const { latitude, longitude, heading, speed } = pos.coords;
+        setFix({
+          lat: latitude,
+          lon: longitude,
+          heading: typeof heading === 'number' && !Number.isNaN(heading) ? heading : 0,
+          speed: typeof speed === 'number' && !Number.isNaN(speed) && speed != null ? speed : 0, // m/s
+          ts: pos.timestamp || Date.now(),
+        });
       },
       (err) => {
         // eslint-disable-next-line no-console
         console.warn('Geolocation error:', err);
       },
-      { enableHighAccuracy: true, maximumAge: 1000, timeout: 10000 }
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
     );
     return () => navigator.geolocation.clearWatch(watchId);
   }, [enabled]);
 
-  return coords;
+  return fix;
 }
 
 function TorusFallback() {
@@ -56,72 +76,75 @@ function TorusFallback() {
 }
 
 export function ThreeScene() {
+  const lowPower = useLowPowerMode();
   const { intensity } = useSpeed();
   const { theme } = useTheme();
-  const { lat, lon, heading } = useGPS();
+  const fix = useGPS();
 
   // Heading degrees (0 = north, clockwise) to radians for Y-rotation
-  const headingRad = useMemo(() => THREE.MathUtils.degToRad(heading || 0), [heading]);
+  const headingRad = useMemo(() => THREE.MathUtils.degToRad(fix.heading || 0), [fix.heading]);
+
+  // FX density
+  const starsCount = lowPower ? 800 : 2000 + Math.round(intensity * 3000);
+  const sparklesCount = lowPower ? 30 : 50 + Math.round(intensity * 100);
 
   return (
     <Canvas
-      dpr={[1, 2]}
-      gl={{ antialias: true, powerPreference: 'high-performance' }}
-      performance={{ min: 0.5 }}
-      shadows
+      dpr={lowPower ? 1 : [1, 2]} // Clamp DPR on low-power
+      gl={{
+        antialias: !lowPower,
+        powerPreference: 'high-performance',
+        alpha: false,
+        stencil: false,
+        depth: true,
+      }}
+      performance={{ min: lowPower ? 0.2 : 0.5 }}
+      shadows={false} // keep cheap
     >
       <color attach="background" args={[0, 0, 0]} />
-      <PerspectiveCamera makeDefault fov={60} position={[0, 1.5, 6]} />
+      <PerspectiveCamera makeDefault fov={lowPower ? 65 : 60} position={[0, 1.5, lowPower ? 6.5 : 6]} />
 
       {/* Lights tuned for glossy black reflections */}
-      <ambientLight intensity={0.35} />
-      <hemisphereLight color={theme.colors.primaryHex} groundColor="#111111" intensity={0.7} />
-      <directionalLight position={[5, 6, 5]} intensity={1.1} color={theme.colors.primaryHex} castShadow />
-      <directionalLight position={[-4, 3, -2]} intensity={0.8} color={theme.colors.accentHex} />
+      <ambientLight intensity={lowPower ? 0.4 : 0.35} />
+      <hemisphereLight color={theme.colors.primaryHex} groundColor="#111111" intensity={lowPower ? 0.8 : 0.7} />
+      <directionalLight position={[-4, 3, -2]} intensity={lowPower ? 0.6 : 0.8} color={theme.colors.accentHex} />
 
       {/* Local HDRI — place public/env/studio.hdr */}
       <Suspense fallback={null}>
         <Environment files="env/studio.hdr" background={false} />
       </Suspense>
 
-      {/* Map floor centered on GPS position */}
+      {/* Map floor centered on GPS; uses dead-reckoning internally for smoothness */}
       <Suspense fallback={null}>
         <MapFloor
-          center={{ lat, lon }}
+          center={{ lat: fix.lat, lon: fix.lon }}
+          speed={fix.speed}
+          headingRad={headingRad}
           zoom={17}
-          size={80}
           y={-2}
+          // Plane size auto-matches 3 tiles at your zoom/latitude for precise scale.
           tileTemplate="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+          lowPower={lowPower}
+          throttleMs={lowPower ? 1000 : 300}
+          resScale={lowPower ? 0.5 : 1}
         />
       </Suspense>
 
-      {/* Car (glossy black handled in CarModel), rotated by heading */}
+      {/* Car (glossy black handled in CarModel), rotated by heading; fixed at origin */}
       <ErrorBoundary fallback={<TorusFallback />}>
         <Suspense fallback={null}>
           <group rotation-y={headingRad}>
-            <CarModel targetSize={3.8} spin={false} glossyBlack />
+            <CarModel targetSize={3.8} spin={false} glossyBlack lowPower={lowPower} />
           </group>
         </Suspense>
       </ErrorBoundary>
 
       {/* Background FX */}
-      <Stars
-        radius={120}
-        depth={50}
-        count={2000 + Math.round(intensity * 3000)}
-        factor={2}
-        saturation={0}
-        fade
-        speed={0.25 + intensity * 1.2}
-      />
-      <Sparkles
-        size={2}
-        speed={0.4 + intensity}
-        count={50 + Math.round(intensity * 100)}
-        color={theme.colors.accentHex}
-        scale={[8, 4, 8]}
-      />
-      <Effects disableGamma />
+      <Stars radius={120} depth={50} count={starsCount} factor={lowPower ? 1.5 : 2} saturation={0} fade speed={0.2 + (lowPower ? 0.6 : intensity * 1.2)} />
+      {!lowPower && <Sparkles size={2} speed={0.4 + intensity} count={sparklesCount} color={theme.colors.accentHex} scale={[8, 4, 8]} />}
+
+      {!lowPower && <Effects disableGamma />}
+
       <OrbitControls enablePan={false} enableZoom={false} maxPolarAngle={Math.PI / 2.2} />
     </Canvas>
   );

@@ -6,6 +6,7 @@ import {
   Group,
   Mesh,
   MeshPhysicalMaterial,
+  MeshStandardMaterial,
   Vector3,
 } from 'three';
 import { useFrame } from '@react-three/fiber';
@@ -16,6 +17,7 @@ type CarModelProps = {
   spin?: boolean;         // Gently rotate the model
   yOffset?: number;       // Nudge up/down if needed
   glossyBlack?: boolean;  // Force glossy black material override
+  lowPower?: boolean;     // Cheaper material shader on low-power devices
 };
 
 function resolveAgainstBase(relativePath: string) {
@@ -34,7 +36,8 @@ export function CarModel({
   targetSize = 3.8,
   spin = true,
   yOffset = 0,
-  glossyBlack = true
+  glossyBlack = true,
+  lowPower = false
 }: CarModelProps) {
   const gltf = useGLTF(url) as any;
 
@@ -42,18 +45,29 @@ export function CarModel({
   const modelGroup = useRef<Group>(null!);
   const glossApplied = useRef(false);
 
+  // Replace all materials; choose cheaper shader on low-power
   useLayoutEffect(() => {
     if (!glossyBlack || !modelGroup.current || glossApplied.current) return;
 
-    const newMat = () =>
+    const makePhysical = () =>
       new MeshPhysicalMaterial({
-        color: new Color('#111111'), // slightly above pure black to read form
+        color: new Color('#121212'),
         metalness: 1.0,
-        roughness: 0.05,
+        roughness: 0.06,
         clearcoat: 1.0,
-        clearcoatRoughness: 0.03,
-        envMapIntensity: 1.2
+        clearcoatRoughness: 0.035,
+        envMapIntensity: 1.35
       });
+
+    const makeStandard = () =>
+      new MeshStandardMaterial({
+        color: new Color('#141414'),
+        metalness: 0.95,
+        roughness: 0.14,
+        envMapIntensity: 1.3
+      });
+
+    const newMat = lowPower ? makeStandard : makePhysical;
 
     modelGroup.current.traverse((obj) => {
       const mesh = obj as Mesh;
@@ -64,12 +78,12 @@ export function CarModel({
       else old?.dispose?.();
 
       mesh.material = newMat();
-      (mesh as any).castShadow = true;
-      (mesh as any).receiveShadow = true;
+      (mesh as any).castShadow = false;   // shadows disabled in low-power scene anyway
+      (mesh as any).receiveShadow = false;
     });
 
     glossApplied.current = true;
-  }, [glossyBlack]);
+  }, [glossyBlack, lowPower]);
 
   useLayoutEffect(() => {
     if (!modelGroup.current) return;
