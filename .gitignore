@@ -25,3 +25,4 @@ pnpm-debug.log*
 "public/models/*.glb" 
 "public/models/*.glb" 
 public/models/*.glb
+public/models/*.glb
