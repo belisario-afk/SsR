@@ -16,8 +16,21 @@ function Root() {
   const { highContrast } = useTheme();
 
   useEffect(() => {
-    // Auto fullscreen on load (as "car-dock" immersion)
-    requestFullscreenIfPossible();
+    // Request fullscreen on first user interaction (gesture-safe).
+    const onInteract = () => {
+      requestFullscreenIfPossible().catch(() => {});
+      window.removeEventListener('pointerdown', onInteract);
+      window.removeEventListener('keydown', onInteract);
+      window.removeEventListener('touchstart', onInteract);
+    };
+    window.addEventListener('pointerdown', onInteract, { once: true });
+    window.addEventListener('keydown', onInteract, { once: true });
+    window.addEventListener('touchstart', onInteract, { once: true, passive: true });
+    return () => {
+      window.removeEventListener('pointerdown', onInteract);
+      window.removeEventListener('keydown', onInteract);
+      window.removeEventListener('touchstart', onInteract);
+    };
   }, []);
 
   return (

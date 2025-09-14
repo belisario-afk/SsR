@@ -1,5 +1,5 @@
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, PerspectiveCamera, Sparkles, Stars, Environment, Effects, Text } from '@react-three/drei';
+import { OrbitControls, PerspectiveCamera, Sparkles, Stars, Effects } from '@react-three/drei';
 import { useRef, useMemo } from 'react';
 import * as THREE from 'three';
 import { useTheme } from '@providers/ThemeProvider';
@@ -11,7 +11,7 @@ function NeonGrid() {
   useFrame((state) => {
     const t = state.clock.getElapsedTime();
     if (gridRef.current) {
-      gridRef.current.position.z = - (t % 10);
+      gridRef.current.position.z = -(t % 10);
     }
   });
   const c1 = theme.colors.primaryHex;
@@ -64,11 +64,11 @@ function Cockpit() {
 }
 
 export function ThreeScene() {
-  const { intensity, speed } = useSpeed();
+  const { intensity } = useSpeed();
   const { theme } = useTheme();
 
   return (
-    <Canvas dpr={[1, 2]} gl={{ antialias: true, powerPreference: "high-performance" }} performance={{ min: 0.5 }}>
+    <Canvas dpr={[1, 2]} gl={{ antialias: true, powerPreference: 'high-performance' }} performance={{ min: 0.5 }}>
       <color attach="background" args={[0, 0, 0]} />
       <PerspectiveCamera makeDefault fov={60} position={[0, 1.2, 5]} />
       <ambientLight intensity={0.4} />
@@ -77,15 +77,8 @@ export function ThreeScene() {
       <NeonGrid />
       <Stars radius={120} depth={50} count={2000 + Math.round(intensity * 3000)} factor={2} saturation={0} fade speed={0.25 + intensity * 1.2} />
       <Sparkles size={2} speed={0.4 + intensity} count={50 + Math.round(intensity * 100)} color={theme.colors.accentHex} scale={[8, 4, 8]} />
-      <Environment preset="night" />
-      <Effects disableGamma>
-        {/* Optional post-processing passes can be added here */}
-      </Effects>
+      <Effects disableGamma>{/* keep lightweight post effects */}</Effects>
       <OrbitControls enablePan={false} enableZoom={false} maxPolarAngle={Math.PI / 2.2} />
-      {/* HUD text for speed (subtle) */}
-      <Text position={[0, 2.5, -2]} color={theme.colors.accentHex} fontSize={0.3} anchorX="center" anchorY="middle">
-        {`${Math.round(speed * 3.6)} km/h`}
-      </Text>
     </Canvas>
   );
 }
