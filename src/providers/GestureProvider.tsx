@@ -11,6 +11,10 @@ type GestureContextType = {
   playlistVisible: boolean;
   togglePlaylistVisible: () => void;
   setPlaylistVisible: (v: boolean) => void;
+
+  // Dashboard visibility
+  dashboardVisible: boolean;
+  toggleDashboardVisible: () => void;
 };
 
 const GestureContext = createContext<GestureContextType | null>(null);
@@ -25,11 +29,16 @@ export function GestureProvider({ children }: { children: React.ReactNode }) {
   const pinchStartDist = useRef<number | null>(null);
   const pinchTriggered = useRef(false);
 
+  // Three-finger tap to toggle dashboard
+  const threeTapTriggered = useRef(false);
+
   const [playerVisible, setPlayerVisible] = useState(true);
   const [playlistVisible, setPlaylistVisible] = useState(false);
+  const [dashboardVisible, setDashboardVisible] = useState(true);
 
   const togglePlayerVisible = useCallback(() => setPlayerVisible((v) => !v), []);
   const togglePlaylistVisible = useCallback(() => setPlaylistVisible((v) => !v), []);
+  const toggleDashboardVisible = useCallback(() => setDashboardVisible((v) => !v), []);
 
   const onTouchStart = useCallback((e: TouchEvent) => {
     if (e.touches.length === 1) {
@@ -45,8 +54,14 @@ export function GestureProvider({ children }: { children: React.ReactNode }) {
       const dy = t2.clientY - t1.clientY;
       pinchStartDist.current = Math.hypot(dx, dy);
       pinchTriggered.current = false;
+    } else if (e.touches.length === 3) {
+      // Three-finger tap toggles dashboard once per touch cluster
+      if (!threeTapTriggered.current) {
+        toggleDashboardVisible();
+        threeTapTriggered.current = true;
+      }
     }
-  }, []);
+  }, [toggleDashboardVisible]);
 
   const onTouchMove = useCallback((e: TouchEvent) => {
     if (e.touches.length === 2 && pinchStartDist.current) {
@@ -73,6 +88,10 @@ export function GestureProvider({ children }: { children: React.ReactNode }) {
     if (e.touches.length === 0) {
       pinchStartDist.current = null;
       pinchTriggered.current = false;
+    }
+    // Reset three-finger tap trigger when fewer than 3 fingers remain
+    if (e.touches.length < 3) {
+      threeTapTriggered.current = false;
     }
 
     const t = e.changedTouches.item(0);
@@ -104,6 +123,7 @@ export function GestureProvider({ children }: { children: React.ReactNode }) {
       if (e.key.toLowerCase() === 't') window.dispatchEvent(new CustomEvent('ssr-cycle-theme'));
       if (e.key.toLowerCase() === 'm') togglePlayerVisible();
       if (e.key.toLowerCase() === 'p') togglePlaylistVisible();
+      if (e.key.toLowerCase() === 'd') toggleDashboardVisible();
     };
     window.addEventListener('keydown', onKey);
 
@@ -113,7 +133,7 @@ export function GestureProvider({ children }: { children: React.ReactNode }) {
       window.removeEventListener('touchend', onTouchEnd);
       window.removeEventListener('keydown', onKey);
     };
-  }, [onTouchEnd, onTouchMove, onTouchStart, togglePlayerVisible, togglePlaylistVisible]);
+  }, [onTouchEnd, onTouchMove, onTouchStart, togglePlayerVisible, togglePlaylistVisible, toggleDashboardVisible]);
 
   return (
     <GestureContext.Provider
@@ -124,7 +144,9 @@ export function GestureProvider({ children }: { children: React.ReactNode }) {
         togglePlayerVisible,
         playlistVisible,
         togglePlaylistVisible,
-        setPlaylistVisible
+        setPlaylistVisible,
+        dashboardVisible,
+        toggleDashboardVisible
       }}
     >
       {children}

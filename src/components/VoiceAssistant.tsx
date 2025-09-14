@@ -5,6 +5,35 @@ import { useGesture } from '@providers/GestureProvider';
 import { useUI } from '@providers/UIProvider';
 import { fetchCurrentWeather, getCoords, wmoToDescription } from '@utils/weather';
 import { motion } from 'framer-motion';
+import { ensureSpotifyAuth, getAccessToken, SPOTIFY_CLIENT_ID, SPOTIFY_REDIRECT_URI } from '@utils/oauth';
+
+async function getTokenEnsured(): Promise<string> {
+  let token = getAccessToken();
+  if (!token) {
+    await ensureSpotifyAuth(SPOTIFY_CLIENT_ID, SPOTIFY_REDIRECT_URI);
+    token = getAccessToken();
+  }
+  return token || '';
+}
+
+async function searchAndPlayTrack(query: string, artist?: string) {
+  const token = await getTokenEnsured();
+  if (!token) throw new Error('No token');
+  const q = encodeURIComponent(artist ? `${query} artist:${artist}` : query);
+  const res = await fetch(`https://api.spotify.com/v1/search?q=${q}&type=track&limit=1`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!res.ok) throw new Error(`Search failed: ${res.status}`);
+  const data = await res.json();
+  const track = data?.tracks?.items?.[0];
+  if (!track?.uri) throw new Error('No track found');
+  await fetch('https://api.spotify.com/v1/me/player/play', {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ uris: [track.uri] })
+  });
+  return { name: track.name as string, artist: (track.artists?.map((a: any) => a.name).join(', ') as string) || '' };
+}
 
 function speak(text: string) {
   try {
@@ -20,7 +49,7 @@ function speak(text: string) {
 export function VoiceAssistant() {
   const { theme, setThemeByName, cycleTheme } = useTheme();
   const { togglePlay, nextTrack, prevTrack, setVolume } = useSpotify();
-  const { togglePlaylistVisible, togglePlayerVisible } = useGesture();
+  const { togglePlaylistVisible, togglePlayerVisible, toggleDashboardVisible } = useGesture();
   const { demoMode, setDemoMode } = useUI();
 
   const [listening, setListening] = useState(false);
@@ -62,9 +91,36 @@ export function VoiceAssistant() {
   async function handleCommand(t: string) {
     if (!t) return;
 
+    // Song search/play (handle BEFORE generic "play" toggle)
+    // 1) "play song ..." / "search song ..." / "play track ..."
+    const songCmd = t.match(/\b(?:play|search)\s+(?:song|track)\s+(.+)$/);
+    if (songCmd?.[1]) {
+      const q = songCmd[1].trim();
+      try {
+        const info = await searchAndPlayTrack(q);
+        speak(`Playing ${info.name} by ${info.artist}.`);
+      } catch {
+        speak('Sorry, I could not find that song.');
+      }
+      return;
+    }
+    // 2) "play ... by ..."
+    const playBy = t.match(/\bplay\s+(.+?)\s+by\s+(.+)$/);
+    if (playBy?.[1]) {
+      const q = playBy[1].trim();
+      const a = (playBy[2] || '').trim();
+      try {
+        const info = await searchAndPlayTrack(q, a);
+        speak(`Playing ${info.name} by ${info.artist}.`);
+      } catch {
+        speak('Sorry, I could not find that song.');
+      }
+      return;
+    }
+
     // Help
     if (/\bhelp\b/.test(t)) {
-      speak('Try: play, pause, next, previous, volume 50 percent, louder, quieter, show or hide player, open playlists, set theme to spy gadget, cycle theme, weather, what time is it, battery, navigate to somewhere, toggle demo mode.');
+      speak('Try: play, pause, next, previous, volume 50 percent, louder, quieter, show or hide player, show or hide dashboard, open playlists, play song thriller, play hotel california by eagles, set theme to spy gadget, cycle theme, weather, time, battery, navigate to somewhere, toggle demo mode.');
       return;
     }
 
@@ -134,8 +190,13 @@ export function VoiceAssistant() {
       speak('Closing playlists.');
       return;
     }
+    if (/\b(show|hide|toggle)\s+dashboard\b/.test(t)) {
+      toggleDashboardVisible();
+      speak('Toggling dashboard.');
+      return;
+    }
 
-    // Theme (safe mapping + guards)
+    // Theme
     const themeMatch = t.match(/theme.*\b(chase|starlight|romance|spygadget|neon 2d|neon2d|reactive)\b/);
     if (themeMatch?.[1]) {
       const raw = themeMatch[1].toLowerCase();
@@ -195,7 +256,7 @@ export function VoiceAssistant() {
       return;
     }
 
-    // Navigation (guard capture group)
+    // Navigation
     const navMatch = t.match(/navigate to (.+)$/);
     const dest = navMatch?.[1]?.trim();
     if (dest && dest.length > 0) {
