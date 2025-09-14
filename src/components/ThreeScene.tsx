@@ -1,37 +1,48 @@
-import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, PerspectiveCamera, Sparkles, Stars, Effects } from '@react-three/drei';
-import { useRef, Suspense } from 'react';
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
+import { Canvas } from '@react-three/fiber';
+import { Effects, Environment, OrbitControls, PerspectiveCamera, Sparkles, Stars } from '@react-three/drei';
 import * as THREE from 'three';
 import { useTheme } from '@providers/ThemeProvider';
 import { useSpeed } from '@providers/SpeedProvider';
-import React from 'react';
 import { CarModel } from '@components/CarModel';
 import { ErrorBoundary } from '@components/ErrorBoundary';
+import { MapFloor } from '@components/MapFloor';
 
-function NeonGrid() {
-  const { theme } = useTheme();
-  const gridRef = useRef<THREE.Group>(null!);
-  useFrame((state) => {
-    const t = state.clock.getElapsedTime();
-    if (gridRef.current) gridRef.current.position.z = -(t % 10);
-  });
-  const c1 = theme.colors.primaryHex;
-  return (
-    <group ref={gridRef} position={[0, -2, 0]}>
-      {[...Array(50)].map((_, i) => (
-        <mesh key={i} position={[0, 0, -i * 2]}>
-          <planeGeometry args={[100, 0.05]} />
-          <meshBasicMaterial color={c1} />
-        </mesh>
-      ))}
-      {[...Array(30)].map((_, i) => (
-        <mesh key={'v' + i} position={[-30 + i * 2, 0, -50]}>
-          <planeGeometry args={[0.05, 100]} />
-          <meshBasicMaterial color={c1} />
-        </mesh>
-      ))}
-    </group>
-  );
+function useGPS(initial = { lat: 34.6509, lon: -120.4544, heading: 0 }) {
+  const [enabled, setEnabled] = useState(false);
+  const [coords, setCoords] = useState(initial);
+
+  useEffect(() => {
+    const onFirstGesture = () => setEnabled(true);
+    window.addEventListener('pointerdown', onFirstGesture, { once: true });
+    window.addEventListener('keydown', onFirstGesture, { once: true });
+    return () => {
+      window.removeEventListener('pointerdown', onFirstGesture);
+      window.removeEventListener('keydown', onFirstGesture);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!enabled || !('geolocation' in navigator)) return;
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        const { latitude, longitude, heading } = pos.coords;
+        setCoords((c) => ({
+          lat: latitude ?? c.lat,
+          lon: longitude ?? c.lon,
+          heading: typeof heading === 'number' && !Number.isNaN(heading) ? heading : c.heading,
+        }));
+      },
+      (err) => {
+        // eslint-disable-next-line no-console
+        console.warn('Geolocation error:', err);
+      },
+      { enableHighAccuracy: true, maximumAge: 1000, timeout: 10000 }
+    );
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, [enabled]);
+
+  return coords;
 }
 
 function TorusFallback() {
@@ -47,27 +58,53 @@ function TorusFallback() {
 export function ThreeScene() {
   const { intensity } = useSpeed();
   const { theme } = useTheme();
+  const { lat, lon, heading } = useGPS();
+
+  // Heading degrees (0 = north, clockwise) to radians for Y-rotation
+  const headingRad = useMemo(() => THREE.MathUtils.degToRad(heading || 0), [heading]);
 
   return (
-    <Canvas dpr={[1, 2]} gl={{ antialias: true, powerPreference: 'high-performance' }} performance={{ min: 0.5 }}>
+    <Canvas
+      dpr={[1, 2]}
+      gl={{ antialias: true, powerPreference: 'high-performance' }}
+      performance={{ min: 0.5 }}
+      shadows
+    >
       <color attach="background" args={[0, 0, 0]} />
-      <PerspectiveCamera makeDefault fov={60} position={[0, 1.2, 5]} />
+      <PerspectiveCamera makeDefault fov={60} position={[0, 1.5, 6]} />
 
-      {/* Lighting tuned for glossy black car */}
+      {/* Lights tuned for glossy black reflections */}
       <ambientLight intensity={0.35} />
-      <hemisphereLight color={theme.colors.primaryHex} groundColor="#111111" intensity={0.6} />
-      <directionalLight position={[5, 5, 5]} intensity={1.0} color={theme.colors.primaryHex} />
+      <hemisphereLight color={theme.colors.primaryHex} groundColor="#111111" intensity={0.7} />
+      <directionalLight position={[5, 6, 5]} intensity={1.1} color={theme.colors.primaryHex} castShadow />
       <directionalLight position={[-4, 3, -2]} intensity={0.8} color={theme.colors.accentHex} />
 
-      {/* Car model (material override to glossy black happens inside CarModel) */}
+      {/* Local HDRI — place public/env/studio.hdr */}
+      <Suspense fallback={null}>
+        <Environment files="env/studio.hdr" background={false} />
+      </Suspense>
+
+      {/* Map floor centered on GPS position */}
+      <Suspense fallback={null}>
+        <MapFloor
+          center={{ lat, lon }}
+          zoom={17}
+          size={80}
+          y={-2}
+          tileTemplate="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+      </Suspense>
+
+      {/* Car (glossy black handled in CarModel), rotated by heading */}
       <ErrorBoundary fallback={<TorusFallback />}>
         <Suspense fallback={null}>
-          <CarModel targetSize={3.8} spin glossyBlack />
+          <group rotation-y={headingRad}>
+            <CarModel targetSize={3.8} spin={false} glossyBlack />
+          </group>
         </Suspense>
       </ErrorBoundary>
 
       {/* Background FX */}
-      <NeonGrid />
       <Stars
         radius={120}
         depth={50}
@@ -84,7 +121,7 @@ export function ThreeScene() {
         color={theme.colors.accentHex}
         scale={[8, 4, 8]}
       />
-      <Effects disableGamma>{/* lightweight post effects only */}</Effects>
+      <Effects disableGamma />
       <OrbitControls enablePan={false} enableZoom={false} maxPolarAngle={Math.PI / 2.2} />
     </Canvas>
   );
