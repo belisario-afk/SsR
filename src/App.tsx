@@ -14,12 +14,14 @@ import { PlaylistPanel } from '@components/PlaylistPanel';
 import { useEffect } from 'react';
 import { requestFullscreenIfPossible } from '@utils/device';
 import { useTheme } from '@providers/ThemeProvider';
+import { FullscreenButton } from '@components/FullscreenButton';
 
 function Root() {
   const { panelIndex, playerVisible, playlistVisible, setPlaylistVisible } = useGesture();
   const { highContrast, theme } = useTheme();
 
   useEffect(() => {
+    // Keep this: request fullscreen on first user gesture, but button will also control it.
     const onInteract = () => {
       requestFullscreenIfPossible().catch(() => {});
       window.removeEventListener('pointerdown', onInteract);
@@ -46,7 +48,8 @@ function Root() {
         <div className="absolute inset-x-0 bottom-0 pointer-events-none pb-4">
           <Panels activeIndex={panelIndex} />
         </div>
-        <div className="absolute top-2 right-2">
+        <div className="absolute top-2 right-2 flex gap-2">
+          <FullscreenButton />
           <SettingsPanel />
         </div>
         {playerVisible && (
