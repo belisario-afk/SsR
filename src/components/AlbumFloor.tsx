@@ -1,23 +1,56 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useThree } from '@react-three/fiber';
 import {
-  CanvasTexture,
   DoubleSide,
   Mesh,
   MeshBasicMaterial,
-  NearestFilter,
   PlaneGeometry,
-  SRGBColorSpace,
   Texture,
-  TextureLoader
+  TextureLoader,
+  SRGBColorSpace,
+  LinearFilter,
+  LinearMipmapLinearFilter,
+  ClampToEdgeWrapping
 } from 'three';
-import { useThree } from '@react-three/fiber';
 
 type AlbumFloorProps = {
   size?: number;
   y?: number;
+  // If provided, overrides mediaSession artwork
   imageUrl?: string;
 };
 
+/**
+ * Simple fallback gradient texture so the floor never appears blank.
+ */
+function gradientTexture(): Texture {
+  const size = 256;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d')!;
+  const g = ctx.createLinearGradient(0, 0, size, size);
+  g.addColorStop(0, '#0c0c0c');
+  g.addColorStop(0.5, '#1a1a1a');
+  g.addColorStop(1, '#0c0c0c');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, size, size);
+
+  const tex = new Texture(canvas);
+  tex.colorSpace = SRGBColorSpace;
+  tex.minFilter = LinearMipmapLinearFilter;
+  tex.magFilter = LinearFilter;
+  tex.wrapS = ClampToEdgeWrapping;
+  tex.wrapT = ClampToEdgeWrapping;
+  tex.generateMipmaps = true;
+  tex.needsUpdate = true;
+  return tex;
+}
+
+/**
+ * Returns an album art URL. If an explicit URL is given, use it.
+ * Otherwise, try navigator.mediaSession.metadata.artwork and pick the largest.
+ */
 function useAlbumArtUrl(explicit?: string) {
   const [url, setUrl] = useState<string | null>(explicit ?? null);
 
@@ -50,7 +83,15 @@ function useAlbumArtUrl(explicit?: string) {
   return url;
 }
 
-export function AlbumFloor({ size = 80, y = -2, imageUrl }: AlbumFloorProps) {
+/**
+ * Renders a textured plane as the "album floor".
+ * Improved quality:
+ * - Uses mipmaps and Linear filters (removes pixelation from Nearest).
+ * - Sets anisotropy up to a safe value based on GPU capability.
+ * Smaller payload:
+ * - We recommend passing a mid-size image (≈300–512px); the loader will create mipmaps.
+ */
+export function AlbumFloor({ size = 60, y = -2, imageUrl }: AlbumFloorProps) {
   const meshRef = useRef<Mesh<PlaneGeometry, MeshBasicMaterial>>(null!);
   const [texture, setTexture] = useState<Texture | null>(null);
   const url = useAlbumArtUrl(imageUrl);
@@ -60,6 +101,19 @@ export function AlbumFloor({ size = 80, y = -2, imageUrl }: AlbumFloorProps) {
     let disposed = false;
 
     async function load() {
+      const applyQuality = (tex: Texture) => {
+        tex.colorSpace = SRGBColorSpace;
+        tex.minFilter = LinearMipmapLinearFilter; // high-quality downscaling
+        tex.magFilter = LinearFilter; // high-quality upscaling
+        tex.wrapS = ClampToEdgeWrapping;
+        tex.wrapT = ClampToEdgeWrapping;
+        tex.generateMipmaps = true;
+        // A balanced anisotropy cap to avoid overusing memory on low-end GPUs
+        const maxAniso = (gl.capabilities as any)?.getMaxAnisotropy?.() || 1;
+        tex.anisotropy = Math.min(8, maxAniso);
+        tex.needsUpdate = true;
+      };
+
       if (url) {
         const loader = new TextureLoader();
         loader.setCrossOrigin('anonymous');
@@ -67,10 +121,7 @@ export function AlbumFloor({ size = 80, y = -2, imageUrl }: AlbumFloorProps) {
           url,
           (tex) => {
             if (disposed) return;
-            tex.colorSpace = SRGBColorSpace;
-            tex.minFilter = NearestFilter;
-            tex.magFilter = NearestFilter;
-            tex.anisotropy = 1;
+            applyQuality(tex);
             setTexture(tex);
           },
           undefined,
@@ -89,7 +140,7 @@ export function AlbumFloor({ size = 80, y = -2, imageUrl }: AlbumFloorProps) {
     return () => {
       disposed = true;
     };
-  }, [url]);
+  }, [url, gl.capabilities]);
 
   useEffect(() => {
     if (!meshRef.current || !texture) return;
@@ -104,24 +155,4 @@ export function AlbumFloor({ size = 80, y = -2, imageUrl }: AlbumFloorProps) {
       <meshBasicMaterial side={DoubleSide} toneMapped={false} />
     </mesh>
   );
-}
-
-function gradientTexture() {
-  const c = document.createElement('canvas');
-  c.width = 1024;
-  c.height = 1024;
-  const ctx = c.getContext('2d')!;
-  const g = ctx.createLinearGradient(0, 0, 1024, 1024);
-  g.addColorStop(0, '#0b0b0b');
-  g.addColorStop(0.5, '#111111');
-  g.addColorStop(1, '#0b0b0b');
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, 1024, 1024);
-
-  const tex = new CanvasTexture(c);
-  tex.colorSpace = SRGBColorSpace;
-  tex.minFilter = NearestFilter;
-  tex.magFilter = NearestFilter;
-  tex.anisotropy = 1;
-  return tex;
 }

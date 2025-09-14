@@ -1,10 +1,11 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { ensureSpotifyAuth, getAccessToken, refreshAccessToken, SPOTIFY_CLIENT_ID, SPOTIFY_REDIRECT_URI } from '@utils/oauth';
 
+type TrackImage = { url: string; width?: number; height?: number };
 type TrackInfo = {
   name: string;
   artist: string;
-  albumImage?: string;
+  albumImage?: string; // picked best-fit size for UI + AlbumFloor
 };
 
 type SpotifyContextType = {
@@ -37,6 +38,15 @@ async function loadSpotifySDK(): Promise<void> {
     document.body.appendChild(script);
     (window as any).onSpotifyWebPlaybackSDKReady = () => resolve();
   });
+}
+
+function pickBestImage(images: TrackImage[], desired: number): string | undefined {
+  if (!images?.length) return undefined;
+  // Sort ascending by width if present
+  const sorted = [...images].sort((a, b) => (a.width ?? 0) - (b.width ?? 0));
+  // Find first >= desired, else use the largest available
+  const candidate = sorted.find((i) => (i.width ?? 0) >= desired) ?? sorted[sorted.length - 1];
+  return candidate?.url;
 }
 
 async function fetchWebAPI(endpoint: string, method: 'GET' | 'PUT' | 'POST' = 'GET', body?: any) {
@@ -112,10 +122,17 @@ export function SpotifyProvider({ children }: { children: React.ReactNode }) {
         setPlaying(!state.paused);
         setDeviceActive(true);
         const t = state.track_window.current_track;
+        const imgs: TrackImage[] = t?.album?.images ?? [];
+        // Heuristic: choose a mid/high size that looks crisp on floor but saves bytes.
+        // DPR-aware target: ~256px for DPR1, ~384-512px for higher DPR.
+        const dpr = Math.min(3, window.devicePixelRatio || 1);
+        const desired = Math.min(640, Math.max(256, Math.round(256 * dpr)));
+        const bestUrl = pickBestImage(imgs, desired);
+
         setTrack({
           name: t?.name,
           artist: t?.artists?.map((a: any) => a.name).join(', '),
-          albumImage: t?.album?.images?.[0]?.url
+          albumImage: bestUrl
         });
       });
 
